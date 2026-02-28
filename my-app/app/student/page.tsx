@@ -1,11 +1,9 @@
 "use client";
 
-import { useState } from "react";
 import { useRouter } from "next/navigation";
 
 export default function StudentHome() {
   const router = useRouter();
-  const [dropdownOpen, setDropdownOpen] = useState(false);
 
   return (
     
@@ -15,35 +13,18 @@ export default function StudentHome() {
       <div className="flex justify-between items-center px-8 py-4 bg-white shadow text-black">
         <h1 className="text-xl font-semibold text-black">Student Portal</h1>
 
-        {/* dropdown menu, buttons are for show */}
+        {/* menu button*/}
         <div className="relative">
-          <button
-            onClick={() => setDropdownOpen(!dropdownOpen)}
-            className="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300 transition text-black"
-          >
+          <button  className="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300 transition text-black"  >
             Menu
           </button>
-
-          {dropdownOpen && (
-            <div className="absolute right-0 mt-2 w-40 bg-white shadow rounded">
-              <button className="block w-full text-left px-4 py-2 hover:bg-gray-100">
-                Profile
-              </button>
-              <button className="block w-full text-left px-4 py-2 hover:bg-gray-100">
-                Settings
-              </button>
-              <button className="block w-full text-left px-4 py-2 hover:bg-gray-100 text-red-500">
-                Logout
-              </button>
-            </div>
-          )}
         </div>
       </div>
 
       {/* top text */}
       <div className="flex justify-center mt-10">
         <h2 className="text-3xl font-bold text-black">
-          Welcome Back, Student
+          Welcome Back, Student_Name
         </h2>
       </div>
 
@@ -96,12 +77,15 @@ export default function StudentHome() {
             >
               <div className="absolute inset-0 bg-black/50 group-hover:bg-black/70 transition" />
 
+
+              {/* module 2 text */}
               <div className="absolute inset-0 flex items-center justify-center transition-opacity duration-300 group-hover:opacity-0">
                 <h4 className="text-white text-2xl font-bold z-10">
-                  Module 2: 3D Modeling Fundamentals
+                  Module 2: 3D Modeling Basics
                 </h4>
               </div>
 
+              {/* hover stuff */}
               <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition">
                 <p className="text-white text-2xl font-bold z-10">
                   Complete previous module to access
