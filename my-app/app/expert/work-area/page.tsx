@@ -28,11 +28,11 @@ export default function CadSession() {
       <div className="h-14 bg-white shadow flex items-center justify-between px-6">
 
         {/* student name*/}
-        <div className="font-semibold text-black">Student Name</div>
+        <div className="font-semibold text-black">Watching: Student Name</div>
 
         {/* module name */}
         <div className="font-medium text-gray-600">
-          Intro to Model Design
+          Intro to Model Design - Expert View
         </div>
 
         {/* right buttons */}
@@ -46,7 +46,7 @@ export default function CadSession() {
           </span>
 
           <button className="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600">
-            Leave Class
+            End Class
           </button>
 
     {/* dropdown menu */}
@@ -64,7 +64,7 @@ export default function CadSession() {
         }}
         className="block w-full text-left px-4 py-2 hover:bg-gray-100 text-sm"
       >
-        Notify Expert
+        Toggle Blueprint?
       </button>
 
       <button
@@ -74,7 +74,7 @@ export default function CadSession() {
         }}
         className="block w-full text-left px-4 py-2 hover:bg-gray-100 text-sm"
       >
-        Contact Expert
+        Contact Student
       </button>
     </div>
   )}
@@ -117,7 +117,7 @@ export default function CadSession() {
 
           <hr className="mb-4" />
 
-          <h3 className="text-sm font-semibold mb-2 text-black">SELECT LAYERS</h3>
+          <h3 className="text-sm font-semibold mb-2 text-black">STUDENT PROGRESS</h3>
 
           <div className="space-y-2">
             {layers.map((layer) => {
