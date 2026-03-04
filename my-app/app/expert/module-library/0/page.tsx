@@ -7,8 +7,17 @@ import * as THREE from "three";
 import type { OrbitControls as OrbitControlsImpl } from "three-stdlib";
 import { Baseplate } from "@/components/Baseplate";
 import { Brick } from "@/components/Brick";
-import { type BrickData } from "@/components/Workspace";
+import wallData from "@/modules/wall.json";
+import { ModuleModel } from "@/components/ModuleModel";
 import Link from "next/link";
+
+export interface BrickData {
+  id: string;
+  position: [number, number, number];
+  dimensions: [number, number, number];
+  color: string;
+  layer: number;
+}
 
 function CameraResetter({ onReady }: { onReady: (reset: () => void) => void }) {
   const { controls } = useThree();
@@ -133,8 +142,11 @@ export default function CadSession() {
     ]);
   }
 
-  // Derive unique layer numbers from placed bricks
   const usedLayers = Array.from(new Set(bricks.map((b) => b.layer))).sort((a, z) => a - z);
+
+  const targetBricks = wallData.targetData as BrickData[];
+
+  const uniqueLayers = Array.from(new Set(targetBricks.map(b => b.layer))).sort((a, b) => a - b);
 
   return (
     <div className="flex flex-col h-screen overflow-hidden bg-gray-200">
@@ -144,36 +156,16 @@ export default function CadSession() {
 
         <Link
           href="/expert/module-library"
-          className="font-medium text-gray-700 hover:text-gray-900 transition flex items-center gap-2"
+          className="flex font-medium text-gray-700 hover:text-gray-900 transition w-100 items-center gap-2"
         >
           Back to Library
         </Link>
 
         {/* module name */}
-        <div className="font-medium text-gray-600">
+        <div className="flex font-medium text-gray-600 items-center justify-center w-full">
           {module.name}
         </div>
 
-        {/* right buttons */}
-        <div className="flex items-center gap-4">
-          <button className="px-4 py-2 text-neutral-900 border border-neutral-900 text-sm font-medium rounded-md cursor-pointer">
-            Edit Module
-          </button>
-
-          <button
-            className="px-4 py-2 bg-neutral-900 text-white text-sm font-medium rounded-md cursor-pointer"
-            onClick={() => {
-              // This copies the exact JSON data of the bui;d
-              navigator.clipboard.writeText(JSON.stringify(bricks, null, 2));
-              alert("Module data copied to clipboard!");
-            }}
-          >
-            Export Module
-          </button>
-
-
-
-        </div>
       </div>
 
       {/* bottom section */}
@@ -189,11 +181,10 @@ export default function CadSession() {
             {tools.map((tool, idx) => (
               <div
                 key={idx}
-                onClick={() => setSelectedIndex(idx)}
-                className={`p-3 rounded-lg text-center cursor-pointer transition text-xs font-medium text-black flex items-center justify-center gap-2
+                className={`p-3 rounded-lg text-center cursor-default transition text-xs font-medium text-black flex items-center justify-center gap-2
                   ${selectedIndex === idx
                     ? "bg-indigo-200 border border-primary-100"
-                    : "bg-gray-200 hover:bg-gray-300"
+                    : "bg-gray-200"
                   }
                 `}
               >
@@ -210,26 +201,30 @@ export default function CadSession() {
 
           <h3 className="text-sm font-semibold mb-2 text-neutral-900">LAYERS</h3>
 
-          {/* Dynamic layer panel — derived from placed bricks, scrollable */}
+          {/* Dynamic layer panel — populated from static JSON module data */}
           <div
             className="flex-1 min-h-0 space-y-3 overflow-y-auto"
             style={{ scrollbarWidth: "none" }}
           >
-            {usedLayers.length === 0 && (
-              <p className="text-xs text-gray-400">No bricks placed yet.</p>
-            )}
-            {usedLayers.map((layerNum) => {
-              const layerBricks = bricks.filter((b) => b.layer === layerNum);
+            {uniqueLayers.map(layerNum => {
+              const bricksInLayer = targetBricks.filter(b => b.layer === layerNum);
+
               return (
-                <div key={layerNum}>
-                  <p className="text-xs font-semibold text-gray-500 mb-1">Layer {layerNum}</p>
-                  <div className="space-y-1">
-                    {layerBricks.map((brick) => (
+                <div key={`layer-group-${layerNum}`}>
+                  <p className="text-xs font-semibold text-gray-500 mb-1">
+                    Layer {layerNum} ({bricksInLayer.length} blocks)
+                  </p>
+                  <div className="space-y-1 mt-2">
+                    {bricksInLayer.map((brick) => (
                       <div
-                        key={brick.id}
-                        className="flex items-center px-3 py-1.5 rounded text-xs bg-white text-black"
+                        key={`ui-brick-${brick.id}`}
+                        className="flex items-center gap-2 px-3 py-1.5 rounded text-xs bg-white text-black"
                       >
-                        <span>{brick.dimensions[0]}×{brick.dimensions[2]}</span>
+                        <div
+                          className="w-3 h-3 rounded-sm border border-black/10"
+                          style={{ backgroundColor: brick.color }}
+                        />
+                        <span>{brick.dimensions[0]}×{brick.dimensions[2]} Block</span>
                       </div>
                     ))}
                   </div>
@@ -260,8 +255,10 @@ export default function CadSession() {
             <Baseplate
               size={BASEPLATE_SIZE}
               currentTool={currentTool}
-              onPlaceBrick={handlePlaceBrick}
+              onPlaceBrick={() => { }}
             />
+
+            <ModuleModel targetBricks={wallData.targetData as BrickData[]} />
 
             {bricks.map((brick) => (
               <Brick

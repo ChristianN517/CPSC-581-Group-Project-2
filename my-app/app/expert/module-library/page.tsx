@@ -10,6 +10,7 @@ export default function ExpertDashboard() {
     { name: "The Wall" },
     { name: "The Pyramid" },
     { name: "The Bridge" },
+    { name: "Create New Module" },
   ];
 
   const students = [
