@@ -85,6 +85,10 @@ export default function CadSession() {
     pressOrigin.current = null;
   }
 
+  function deleteBrick(id: string) {
+    setBricks((prev) => prev.filter((b) => b.id !== id));
+}
+
   // returns true if the new brick's 3D footprint overlaps any existing brick.
   // epsilon prevents adjacent touching faces from counting as collisions.
   function checkCollision(
@@ -290,6 +294,7 @@ export default function CadSession() {
                 color={brick.color}
                 currentTool={currentTool}
                 onPlaceBrick={handlePlaceBrick}
+                onDelete={() => deleteBrick(brick.id)}
               />
             ))}
 

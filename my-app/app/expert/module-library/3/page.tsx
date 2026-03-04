@@ -35,6 +35,9 @@ export default function CadSession() {
         { label: "Brick 1x2", dims: [1, 1, 2], color: "#BF5426" },
         { label: "Brick 1x2", dims: [1, 1, 2], color: "#D2892D" },
         { label: "Plate 1x6", dims: [1, 0.4, 6], color: "#E8B987" },
+        { label: "Brick 1x4", dims: [1, 1, 4], color: "#26bfa0" },
+        { label: "Brick 2x4", dims: [2, 1, 4], color: "#6970eb" },
+        { label: "Brick 2x2", dims: [2, 1, 2], color: "#d45050" }
     ];
 
     const [selectedIndex, setSelectedIndex] = useState(0);
@@ -85,6 +88,10 @@ export default function CadSession() {
         }
         pressOrigin.current = null;
     }
+
+    function deleteBrick(id: string) {
+    setBricks((prev) => prev.filter((b) => b.id !== id));
+}
 
     // returns true if the new brick's 3D footprint overlaps any existing brick.
     // epsilon prevents adjacent touching faces from counting as collisions.
@@ -267,6 +274,7 @@ export default function CadSession() {
                                 color={brick.color}
                                 currentTool={currentTool}
                                 onPlaceBrick={handlePlaceBrick}
+                                onDelete={() => deleteBrick(brick.id)}
                             />
                         ))}
 

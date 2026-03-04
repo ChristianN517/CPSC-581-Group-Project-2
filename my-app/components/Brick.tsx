@@ -11,9 +11,10 @@ interface BrickProps {
     color: string;
     currentTool: [number, number, number];
     onPlaceBrick: (x: number, y: number, z: number) => void;
+    onDelete: () => void;
 }
 
-export function Brick({ position, dimensions, color, currentTool, onPlaceBrick }: BrickProps) {
+export function Brick({ position, dimensions, color, currentTool, onPlaceBrick, onDelete }: BrickProps) {
     const [w, h, d] = dimensions;
 
     const studs: { sx: number; sz: number }[] = [];
@@ -33,14 +34,21 @@ export function Brick({ position, dimensions, color, currentTool, onPlaceBrick }
         onPlaceBrick(newX, newY, newZ);
     }
 
+    function handleDelete(e: ThreeEvent<MouseEvent>) {
+       if (e.button === 2) {   // right click
+        e.stopPropagation();
+        onDelete();
+    }
+    }
+
     return (
         <group position={position}>
-            <mesh castShadow receiveShadow onClick={handleClick}>
+            <mesh castShadow receiveShadow onClick={handleClick} onPointerUp={handleDelete}>
                 <boxGeometry args={[w, h, d]} />
                 <meshStandardMaterial color={color} />
             </mesh>
             {studs.map(({ sx, sz }, i) => (
-                <mesh key={i} position={[sx, h / 2 + 0.06, sz]} castShadow onClick={handleClick}>
+                <mesh key={i} position={[sx, h / 2 + 0.06, sz]} castShadow onClick={handleClick} onPointerUp={handleDelete}>
                     <cylinderGeometry args={[0.18, 0.18, 0.12, 16]} />
                     <meshStandardMaterial color={color} />
                 </mesh>
