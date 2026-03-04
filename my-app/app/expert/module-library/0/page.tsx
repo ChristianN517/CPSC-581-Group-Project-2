@@ -8,6 +8,7 @@ import type { OrbitControls as OrbitControlsImpl } from "three-stdlib";
 import { Baseplate } from "@/components/Baseplate";
 import { Brick } from "@/components/Brick";
 import { type BrickData } from "@/components/Workspace";
+import Link from "next/link";
 
 function CameraResetter({ onReady }: { onReady: (reset: () => void) => void }) {
   const { controls } = useThree();
@@ -25,9 +26,11 @@ export default function CadSession() {
   const [bricks, setBricks] = useState<BrickData[]>([]);
   const resetCameraRef = useRef<(() => void) | null>(null);
 
+  const module = { name: "The Wall" };
+
   const BASEPLATE_SIZE = 10;
 
-  // The three brick types for "The Wall"
+  // brick types for "The Wall"
   const tools: { label: string; dims: [number, number, number]; color: string }[] = [
     { label: "Brick 1x2", dims: [1, 1, 2], color: "#BF5426" },
     { label: "Brick 1x2", dims: [1, 1, 2], color: "#D2892D" },
@@ -139,58 +142,37 @@ export default function CadSession() {
       {/* top */}
       <div className="h-14 bg-white shadow flex items-center justify-between px-6">
 
-        {/* student name*/}
-        <div className="font-semibold text-black">Student Name</div>
+        <Link
+          href="/expert/module-library"
+          className="font-medium text-gray-700 hover:text-gray-900 transition flex items-center gap-2"
+        >
+          Back to Library
+        </Link>
 
         {/* module name */}
         <div className="font-medium text-gray-600">
-          Introduction to CAD
+          {module.name}
         </div>
 
         {/* right buttons */}
         <div className="flex items-center gap-4">
-          <button className="px-3 py-1 border rounded hover:bg-gray-100 text-black">
-            Talk
-          </button>
-
-          <span className="text-green-600 text-sm font-semibold">
-            Phone Linked
-          </span>
-
           <button className="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600">
             Leave Class
           </button>
 
-          {/* dropdown menu */}
-          <div className="relative">
-            <button onClick={() => setShowSettings(!showSettings)} className="text-lg hover:opacity-70 text-black" >
-              Menu
-            </button>
+          <button
+            className="px-4 py-2 bg-neutral-900 text-white text-sm font-medium rounded-md cursor-pointer"
+            onClick={() => {
+              // This copies the exact JSON data of the bui;d
+              navigator.clipboard.writeText(JSON.stringify(bricks, null, 2));
+              alert("Module data copied to clipboard!");
+            }}
+          >
+            Export Module
+          </button>
 
-            {showSettings && (
-              <div className="absolute right-0 mt-2 w-48 bg-white shadow-lg rounded-lg border z-50 text-black">
-                <button
-                  onClick={() => {
-                    alert("Expert has been notified.");
-                    setShowSettings(false);
-                  }}
-                  className="block w-full text-left px-4 py-2 hover:bg-gray-100 text-sm"
-                >
-                  Notify Expert
-                </button>
 
-                <button
-                  onClick={() => {
-                    alert("Opening contact channel...");
-                    setShowSettings(false);
-                  }}
-                  className="block w-full text-left px-4 py-2 hover:bg-gray-100 text-sm"
-                >
-                  Contact Expert
-                </button>
-              </div>
-            )}
-          </div>
+
         </div>
       </div>
 
