@@ -208,15 +208,9 @@ export default function CadSession() {
       <div className="flex flex-1 min-h-0 overflow-hidden">
 
         {/* sidebar */}
-        <div className="w-64 bg-gray-100 p-4 border-r flex flex-col overflow-hidden min-h-0">
+        <div className="w-64 p-4 bg-white border-r border-gray-200 flex flex-col overflow-hidden min-h-0">
 
-          <h3 className="text-sm font-semibold mb-2 text-black">ELEMENTS</h3>
-
-          <input
-            type="text"
-            placeholder="Search shapes..."
-            className="mb-4 p-2 rounded border text-sm text-black"
-          />
+          <h3 className="text-sm font-semibold mb-4 text-neutral-900">ELEMENTS</h3>
 
           {/* brickss grid */}
           <div className="grid grid-cols-2 gap-3 mb-6">
@@ -226,7 +220,7 @@ export default function CadSession() {
                 onClick={() => setSelectedTool(tool)}
                 className={`p-4 rounded-lg text-center cursor-pointer transition text-sm text-black
                   ${selectedTool === tool
-                    ? "bg-indigo-200 border border-indigo-500"
+                    ? "bg-indigo-200 border border-primary-100"
                     : "bg-gray-200 hover:bg-gray-300"
                   }
                 `}
@@ -238,7 +232,7 @@ export default function CadSession() {
 
           <hr className="mb-4" />
 
-          <h3 className="text-sm font-semibold mb-2 text-black">LAYERS</h3>
+          <h3 className="text-sm font-semibold mb-2 text-neutral-900">LAYERS</h3>
 
           {/* Dynamic layer panel — derived from placed bricks, scrollable */}
           <div

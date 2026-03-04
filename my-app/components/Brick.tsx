@@ -36,7 +36,7 @@ export function Brick({ position, dimensions, color, currentTool, onPlaceBrick }
     return (
         <group position={position}>
             <mesh castShadow receiveShadow onClick={handleClick}>
-                <boxGeometry args={[w * 0.95, h, d * 0.95]} />
+                <boxGeometry args={[w, h, d]} />
                 <meshStandardMaterial color={color} />
             </mesh>
             {studs.map(({ sx, sz }, i) => (

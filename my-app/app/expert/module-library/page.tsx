@@ -25,7 +25,7 @@ export default function ExpertDashboard() {
       <aside className="w-64 flex-shrink-0 bg-white border-r border-gray-200 flex flex-col">
 
         <div className="flex items-center gap-3 px-5 py-4">
-          <div className="w-8 h-8 rounded bg-indigo-600 flex-shrink-0" />
+          <div className="w-8 h-8 rounded bg-primary-100 flex-shrink-0" />
           <span className="font-semibold text-gray-900 text-md">App Name</span>
         </div>
 
