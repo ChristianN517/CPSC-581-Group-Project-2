@@ -28,16 +28,17 @@ export default function CadSession() {
 
   const BASEPLATE_SIZE = 10;
 
-  // Maps the sidebar label to [width, height, depth] in world/grid units
-  const TOOL_DIMS: Record<string, [number, number, number]> = {
-    "Brick 2x4": [2, 1, 4],
-    "Brick 2x2": [2, 1, 2],
-    "Plate 1x2": [1, 0.4, 2],
-    "Brick 1x4": [1, 1, 4],
-    "Plate 2x2": [2, 0.4, 2],
-    "Brick 1x1": [1, 1, 1],
-  };
-  const currentTool = TOOL_DIMS[selectedTool] ?? [2, 1, 4];
+  // brick types for "The Wall"
+  const tools: { label: string; dims: [number, number, number]; color: string }[] = [
+    { label: "Brick 1x2", dims: [1, 1, 2], color: "#457B9D" },
+    { label: "Brick 1x2", dims: [1, 1, 2], color: "#A8DADC" },
+    { label: "Brick 2x2", dims: [2, 1, 2], color: "#E63946" },
+    { label: "Plate 2x6", dims: [2, 0.4, 6], color: "#daa569" },
+  ];
+
+  const [selectedIndex, setSelectedIndex] = useState(0);
+  const currentTool = tools[selectedIndex].dims;
+  const currentColor = tools[selectedIndex].color;
 
   const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const pressOrigin = useRef<{ x: number; y: number } | null>(null);
@@ -125,20 +126,11 @@ export default function CadSession() {
         id: crypto.randomUUID(),
         position: newPos,
         dimensions: currentTool,
-        color: "#e63946",
+        color: currentColor,
         layer,
       },
     ]);
   }
-
-  const tools = [
-    "Brick 2x4",
-    "Brick 2x2",
-    "Plate 1x2",
-    "Brick 1x4",
-    "Plate 2x2",
-    "Brick 1x1",
-  ];
 
   // Derive unique layer numbers from placed bricks
   const usedLayers = Array.from(new Set(bricks.map((b) => b.layer))).sort((a, z) => a - z);
@@ -204,7 +196,6 @@ export default function CadSession() {
         </div>
       </div>
 
-      {/* bottom section */}
       <div className="flex flex-1 min-h-0 overflow-hidden">
 
         {/* sidebar */}
@@ -214,18 +205,22 @@ export default function CadSession() {
 
           {/* brickss grid */}
           <div className="grid grid-cols-2 gap-3 mb-6">
-            {tools.map((tool) => (
+            {tools.map((tool, idx) => (
               <div
-                key={tool}
-                onClick={() => setSelectedTool(tool)}
-                className={`p-4 rounded-lg text-center cursor-pointer transition text-sm text-black
-                  ${selectedTool === tool
+                key={idx}
+                onClick={() => setSelectedIndex(idx)}
+                className={`p-3 rounded-lg text-center cursor-pointer transition text-xs font-medium text-black flex items-center justify-center gap-2
+                              ${selectedIndex === idx
                     ? "bg-indigo-200 border border-primary-100"
                     : "bg-gray-200 hover:bg-gray-300"
                   }
-                `}
+                            `}
               >
-                {tool}
+                <div
+                  className="w-3 h-3 rounded-full border border-black/20"
+                  style={{ backgroundColor: tool.color }}
+                />
+                {tool.label}
               </div>
             ))}
           </div>
