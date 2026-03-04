@@ -84,6 +84,29 @@ export default function CadSession() {
     pressOrigin.current = null;
   }
 
+  // AABB collision: returns true if the new brick's 3D footprint overlaps any existing brick.
+  // epsilon prevents adjacent touching faces from counting as collisions.
+  function checkCollision(
+    newPos: [number, number, number],
+    newDim: [number, number, number],
+    existingBricks: BrickData[]
+  ): boolean {
+    const epsilon = 0.05;
+    const [nx, ny, nz] = newPos;
+    const [nw, nh, nd] = newDim;
+    const nMinX = nx - nw / 2, nMaxX = nx + nw / 2;
+    const nMinY = ny - nh / 2, nMaxY = ny + nh / 2;
+    const nMinZ = nz - nd / 2, nMaxZ = nz + nd / 2;
+
+    return existingBricks.some(({ position: [ex, ey, ez], dimensions: [ew, eh, ed] }) => {
+      return (
+        nMinX < ex + ew / 2 - epsilon && nMaxX > ex - ew / 2 + epsilon &&
+        nMinY < ey + eh / 2 - epsilon && nMaxY > ey - eh / 2 + epsilon &&
+        nMinZ < ez + ed / 2 - epsilon && nMaxZ > ez - ed / 2 + epsilon
+      );
+    });
+  }
+
   function handlePlaceBrick(x: number, y: number, z: number) {
     const [w, , d] = currentTool;
     const half = BASEPLATE_SIZE / 2;
@@ -93,11 +116,14 @@ export default function CadSession() {
       z - d / 2 < -half || z + d / 2 > half
     ) return;
 
+    const newPos: [number, number, number] = [x, y, z];
+    if (checkCollision(newPos, currentTool, bricks)) return;
+
     setBricks((prev) => [
       ...prev,
       {
         id: crypto.randomUUID(),
-        position: [x, y, z],
+        position: newPos,
         dimensions: currentTool,
         color: "#e63946",
       },

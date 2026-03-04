@@ -8,16 +8,11 @@ import { Brick } from "./Brick";
 
 export interface BrickData {
     id: string;
-    position: [number, number, number];  // world-space centre [x, y, z]
-    dimensions: [number, number, number]; // [width, height, depth] in grid units
+    position: [number, number, number];
+    dimensions: [number, number, number];
     color: string;
 }
 
-/**
- * Snaps a raw raycaster intersection coordinate to the correct grid centre.
- * Odd-sized bricks centre on half-integers (0.5, 1.5 …).
- * Even-sized bricks centre on whole integers (0, 1, 2 …).
- */
 export function snapToGrid(intersectValue: number, dimensionSize: number): number {
     const isEven = dimensionSize % 2 === 0;
     if (isEven) {
