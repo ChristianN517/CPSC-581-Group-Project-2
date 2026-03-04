@@ -2,7 +2,7 @@
 
 // Renders a single placed Lego brick — a flat body with procedurally generated studs on top based on brick type.
 
-import { gridToWorld, BRICK_DIMS } from "@/utils/grid";
+import { gridToWorld } from "@/utils/grid";
 
 type BrickType = "1x1" | "1x2" | "2x2" | "2x4";
 
@@ -14,6 +14,12 @@ interface BrickProps {
     type?: BrickType;
 }
 
+const BRICK_DIMS: Record<BrickType, { w: number; d: number }> = {
+    "1x1": { w: 1, d: 1 },
+    "1x2": { w: 1, d: 2 },
+    "2x2": { w: 2, d: 2 },
+    "2x4": { w: 2, d: 4 },
+};
 
 export function Brick({ x, y, z, color, type = "2x4" }: BrickProps) {
     const { w, d } = BRICK_DIMS[type];

@@ -22,7 +22,7 @@ const STUD_COLOR = new THREE.Color("#CAD5E8");
 /**
  * Lego-style baseplate
  */
-export function Baseplate({ size = 16 }: BaseplateProps) {
+export function Baseplate({ size = 4 }: BaseplateProps) {
     const instancedRef = useRef<THREE.InstancedMesh>(null!);
     const half = size / 2;
 

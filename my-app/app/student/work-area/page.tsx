@@ -6,7 +6,7 @@ import { OrbitControls } from "@react-three/drei";
 import * as THREE from "three";
 import type { OrbitControls as OrbitControlsImpl } from "three-stdlib";
 import { Baseplate } from "@/components/Baseplate";
-import { BrickCanvas } from "@/components/BrickCanvas";
+import { FloorPlane } from "@/components/FloorPlane";
 
 function CameraResetter({ onReady }: { onReady: (reset: () => void) => void }) {
   const { controls } = useThree();
@@ -18,28 +18,8 @@ function CameraResetter({ onReady }: { onReady: (reset: () => void) => void }) {
   return null;
 }
 
-const BRICK_COLORS: Record<string, string> = {
-  "Brick 2x4": "#EF4444",
-  "Brick 2x2": "#3B82F6",
-  "Plate 1x2": "#FACC15",
-  "Brick 1x4": "#22C55E",
-  "Plate 2x2": "#A855F7",
-  "Brick 1x1": "#F97316",
-};
-
-const BRICK_TYPES: Record<string, "1x1" | "1x2" | "2x2" | "2x4"> = {
-  "Brick 2x4": "2x4",
-  "Brick 2x2": "2x2",
-  "Plate 1x2": "1x2",
-  "Brick 1x4": "2x4",
-  "Plate 2x2": "2x2",
-  "Brick 1x1": "1x1",
-};
-
 export default function CadSession() {
-  const [selectedTool, setSelectedTool] = useState<string | null>("Brick 2x4");
-  const selectedColor = selectedTool ? BRICK_COLORS[selectedTool] : null;
-  const selectedType = selectedTool ? BRICK_TYPES[selectedTool] : null;
+  const [selectedTool, setSelectedTool] = useState("Brick 2x4");
   const [showSettings, setShowSettings] = useState(false);
   const [baseplateSize, setBaseplateSize] = useState(12);
   const [ctxMenu, setCtxMenu] = useState<{ x: number; y: number } | null>(null);
@@ -192,7 +172,7 @@ export default function CadSession() {
             {tools.map((tool) => (
               <div
                 key={tool}
-                onClick={() => setSelectedTool(selectedTool === tool ? null : tool)}
+                onClick={() => setSelectedTool(tool)}
                 className={`p-4 rounded-lg text-center cursor-pointer transition text-sm text-black
                   ${selectedTool === tool
                     ? "bg-indigo-200 border border-indigo-500"
@@ -258,14 +238,27 @@ export default function CadSession() {
           onContextMenu={(e) => e.preventDefault()}
           onClick={closeCtxMenu}
         >
-          <BrickCanvas
-            studentId="student-001"
-            selectedColor={selectedColor}
-            selectedType={selectedType}
-            onSnap={(brick, stepIndex) => {
-              console.log("brick placed:", brick, "step:", stepIndex);
-            }}
-          />
+          <Canvas
+            camera={{ position: [10, 10, 10], fov: 50 }}
+            shadows
+            style={{ width: "100%", height: "100%", background: "#F1F2F4" }}
+          >
+            <ambientLight intensity={0.9} />
+            <directionalLight position={[10, 20, 10]} intensity={0.5} castShadow />
+
+            <Baseplate />
+
+            <OrbitControls
+              makeDefault
+              mouseButtons={{
+                LEFT: undefined as unknown as THREE.MOUSE,
+                MIDDLE: THREE.MOUSE.DOLLY,
+                RIGHT: THREE.MOUSE.ROTATE,
+              }}
+            />
+            <CameraResetter onReady={handleCameraReady} />
+          </Canvas>
+
 
           {/* Right-click context menu */}
           {ctxMenu && (
