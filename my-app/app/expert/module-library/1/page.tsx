@@ -46,6 +46,9 @@ export default function CadSession() {
     { label: "Brick 1x2", dims: [1, 1, 2], color: "#BF5426" },
     { label: "Brick 1x2", dims: [1, 1, 2], color: "#D2892D" },
     { label: "Plate 1x6", dims: [1, 0.4, 6], color: "#E8B987" },
+    { label: "Brick 1x4", dims: [1, 1, 4], color: "#26bfa0" },
+    { label: "Brick 2x4", dims: [2, 1, 4], color: "#6970eb" },
+    { label: "Brick 2x2", dims: [2, 1, 2], color: "#d45050" }
   ];
 
   const [selectedIndex, setSelectedIndex] = useState(0);
@@ -271,8 +274,12 @@ export default function CadSession() {
 
               return (
                 <div key={`layer-group-${layerNum}`}>
-                  <p className="text-xs font-semibold text-gray-500 mb-1">
+                  <p className="text-xs font-semibold text-gray-500 mb-1 flex items-center gap-1">
                     Layer {layerNum} ({bricksInLayer.length} blocks)
+
+                    {completedLayers.includes(layerNum) && (
+                      <span className="text-green-500">✅</span>
+                    )}
                   </p>
                   <div className="space-y-1 mt-2">
                     {bricksInLayer.map((brick) => (
