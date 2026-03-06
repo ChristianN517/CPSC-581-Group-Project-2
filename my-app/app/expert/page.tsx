@@ -49,8 +49,15 @@ function ExpertDashboardInner() {
     ({ socketId, name }: { socketId: string; name: string }) => {
       setActiveSession((prev) => {
         if (!prev) return prev;
-        // avoid duplicates
-        if (prev.students.some((s) => s.socketId === socketId)) return prev;
+        // If same socket rejoins (e.g. page back + rejoin), update their name
+        if (prev.students.some((s) => s.socketId === socketId)) {
+          return {
+            ...prev,
+            students: prev.students.map((s) =>
+              s.socketId === socketId ? { ...s, name } : s
+            ),
+          };
+        }
         return {
           ...prev,
           students: [...prev.students, { socketId, name, needsHelp: false, bricks: [] }],
@@ -102,7 +109,7 @@ function ExpertDashboardInner() {
 
     socket.emit(
       "session:create",
-      { expertName: sessionName.trim() },
+      { className: sessionName.trim() },
       (res: { code?: string; error?: string }) => {
         setIsCreating(false);
         if (res.error) {

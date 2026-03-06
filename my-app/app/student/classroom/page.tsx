@@ -1,6 +1,7 @@
 "use client";
 
-import { useRef, useState, useCallback, useEffect } from "react";
+import { useRef, useState, useCallback, useEffect, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Canvas, useThree } from "@react-three/fiber";
 import { OrbitControls } from "@react-three/drei";
 import * as THREE from "three";
@@ -9,6 +10,8 @@ import { Baseplate } from "@/components/Baseplate";
 import { Brick } from "@/components/Brick";
 import wallData from "@/modules/wall.json";
 import { ObjectiveModel } from "@/components/ObjectiveModel";
+import { socket } from "@/lib/socket";
+import Link from "next/link";
 
 export interface BrickData {
     id: string;
@@ -28,7 +31,10 @@ function CameraResetter({ onReady }: { onReady: (reset: () => void) => void }) {
     return null;
 }
 
-export default function CadSession() {
+function CadSessionInner() {
+    const router = useRouter();
+    const searchParams = useSearchParams();
+    const sessionName = searchParams.get("sessionName") || "Introduction to CAD";
     const [selectedTool, setSelectedTool] = useState("Brick 2x4");
     const [showSettings, setShowSettings] = useState(false);
     const [ctxMenu, setCtxMenu] = useState<{ x: number; y: number } | null>(null);
@@ -52,6 +58,17 @@ export default function CadSession() {
     const pressOrigin = useRef<{ x: number; y: number } | null>(null);
     const LONG_PRESS_MS = 500;
     const DRAG_THRESHOLD_PX = 8;
+
+    const handleSessionEnded = useCallback(() => {
+        sessionStorage.removeItem("activeSession");
+        alert("The expert ended the session.");
+        router.push("/student");
+    }, [router]);
+
+    useEffect(() => {
+        socket.on("session:ended", handleSessionEnded);
+        return () => { socket.off("session:ended", handleSessionEnded); };
+    }, [handleSessionEnded]);
 
     const handleCameraReady = useCallback((fn: () => void) => {
         resetCameraRef.current = fn;
@@ -94,7 +111,7 @@ export default function CadSession() {
     }
 
     function deleteBrick(id: string) {
-    setBricks((prev) => prev.filter((b) => b.id !== id));
+        setBricks((prev) => prev.filter((b) => b.id !== id));
     }
 
     // returns true if the new brick's 3D footprint overlaps any existing brick.
@@ -144,6 +161,12 @@ export default function CadSession() {
         ]);
     }
 
+    function handleLeave() {
+        socket.emit("session:leave");
+        sessionStorage.removeItem("activeSession");
+        router.push("/student");
+    }
+
     // Derive unique layer numbers from placed bricks
     const usedLayers = Array.from(new Set(bricks.map((b) => b.layer))).sort((a, z) => a - z);
 
@@ -153,12 +176,16 @@ export default function CadSession() {
             {/* top */}
             <div className="h-14 bg-white shadow flex items-center justify-between px-6">
 
-                {/* student name*/}
-                <div className="font-semibold text-black">Student Name</div>
+                <Link
+                    href="/student"
+                    className="flex font-medium text-gray-700 hover:text-gray-900 transition w-100 items-center gap-2"
+                >
+                    Back to Dashboard
+                </Link>
 
-                {/* module name */}
+                {/* session name */}
                 <div className="font-medium text-gray-600">
-                    Introduction to CAD
+                    {sessionName}
                 </div>
 
                 {/* right buttons */}
@@ -171,8 +198,12 @@ export default function CadSession() {
                         Phone Linked
                     </span>
 
-                    <button className="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600">
-                        Leave Class
+                    <button
+                        onClick={handleLeave}
+                        className="rounded-lg flex items-center gap-2 px-4 py-2 bg-red-500 hover:bg-red-600 text-white text-sm font-medium transition"
+                    >
+                        <img src="/assets/exit.svg" alt="Exit" className="w-4 h-4 flex-shrink-0" />
+                        Leave session
                     </button>
 
                     {/* dropdown menu */}
@@ -338,5 +369,13 @@ export default function CadSession() {
                 </div>
             </div>
         </div>
+    );
+}
+
+export default function CadSession() {
+    return (
+        <Suspense>
+            <CadSessionInner />
+        </Suspense>
     );
 }

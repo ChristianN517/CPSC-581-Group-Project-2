@@ -8,7 +8,7 @@ import { socket } from "@/lib/socket";
 
 interface ActiveSession {
   code: string;
-  expertName: string;
+  className: string;
 }
 
 function StudentDashboardInner() {
@@ -21,7 +21,27 @@ function StudentDashboardInner() {
   const [studentName, setStudentName] = useState("");
   const [isJoining, setIsJoining] = useState(false);
   const [joinError, setJoinError] = useState("");
-  const [activeSession, setActiveSession] = useState<ActiveSession | null>(null);
+  const [activeSession, setActiveSession] = useState<ActiveSession | null>(() => {
+    if (typeof window !== "undefined") {
+      const saved = sessionStorage.getItem("activeSession");
+      if (saved) {
+        try {
+          return JSON.parse(saved);
+        } catch (e) {
+          return null;
+        }
+      }
+    }
+    return null;
+  });
+
+  useEffect(() => {
+    if (activeSession) {
+      sessionStorage.setItem("activeSession", JSON.stringify(activeSession));
+    } else {
+      sessionStorage.removeItem("activeSession");
+    }
+  }, [activeSession]);
 
   const activities = [
     { name: "The Pyramid", status: "completed" },
@@ -55,13 +75,13 @@ function StudentDashboardInner() {
     socket.emit(
       "session:join",
       { code: joinCode.trim(), studentName: studentName.trim() },
-      (res: { success?: boolean; expertName?: string; error?: string }) => {
+      (res: { success?: boolean; className?: string; error?: string }) => {
         setIsJoining(false);
         if (res.error) {
           setJoinError(res.error);
           return;
         }
-        setActiveSession({ code: joinCode.trim(), expertName: res.expertName ?? "" });
+        setActiveSession({ code: joinCode.trim(), className: res.className ?? "" });
         setShowModal(false);
         setJoinCode("");
       }
@@ -140,9 +160,6 @@ function StudentDashboardInner() {
       <div className="flex flex-col flex-1 min-w-0">
 
         <header className="h-14 flex-shrink-0 bg-white border-b border-gray-200 flex items-center justify-center px-6">
-          {activeSession && (
-            <span className="text-sm text-gray-400">{activeSession.expertName}'s Session</span>
-          )}
         </header>
 
         <main className="flex flex-col flex-1 overflow-y-auto bg-gray-50 px-10 py-8">
@@ -167,33 +184,47 @@ function StudentDashboardInner() {
           {/* Classroom tab (in session) */}
           {activeTab === "classroom" && activeSession && (
             <div className="flex flex-col gap-6">
+              <h1 className="text-2xl font-bold text-gray-900 mb-2">Active Class</h1>
 
-              {/* Session banner */}
-              <div className="flex items-center justify-between bg-white border border-indigo-100 rounded-2xl px-6 py-4">
-                <div className="flex items-center gap-4">
-                  <span className="text-md font-semibold text-neutral-900">Session Code:</span>
-                  <span className="text-4xl font-bold tracking-[0.25em] text-primary-100 font-['DM_Sans']">
-                    {activeSession.code}
-                  </span>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                <div className="bg-white rounded-xl overflow-hidden border border-gray-200 transition">
+                  {/* Card header */}
+                  <div className="flex items-center justify-between px-4 py-3 bg-gray-50 border-b border-gray-100">
+                    <div className="flex items-center gap-2.5">
+                      <span className="font-semibold text-sm text-gray-900 truncate">
+                        {activeSession.className}
+                      </span>
+                    </div>
+                    {/* Pulsing live indicator */}
+                    <span className="flex w-2.5 h-2.5 rounded-full bg-green-500 animate-pulse shadow-[0_0_8px_rgba(34,197,94,0.6)]" title="Live Session"></span>
+                  </div>
+
+                  {/* Card body */}
+                  <div className="p-4 flex flex-col gap-5">
+                    <div className="flex items-center justify-between bg-gray-50 rounded-lg px-4 py-2.5 border border-gray-100">
+                      <span className="text-xs font-medium text-gray-500">Session Code</span>
+                      <span className="text-sm font-bold tracking-[0.2em] text-primary-100">
+                        {activeSession.code}
+                      </span>
+                    </div>
+
+                    <div className="flex gap-2.5">
+                      <button
+                        onClick={() => router.push(`/student/classroom?sessionName=${encodeURIComponent(activeSession.className)}`)}
+                        className="flex-1 py-2 bg-primary-100 hover:bg-indigo-700 text-white rounded-xl text-sm font-medium transition"
+                      >
+                        Open Workspace
+                      </button>
+                      <button
+                        onClick={handleLeave}
+                        className="p-2 border border-red-200 bg-red-50 hover:bg-red-100 text-red-600 rounded-xl transition flex items-center justify-center shrink-0 group"
+                        title="Leave Class"
+                      >
+                        <img src="/assets/exit-red.svg" alt="Exit" className="w-5 h-5 flex-shrink-0" />
+                      </button>
+                    </div>
+                  </div>
                 </div>
-                <button
-                  onClick={handleLeave}
-                  className="rounded-lg flex items-center gap-2 px-4 py-2 bg-red-500 hover:bg-red-600 text-white text-sm font-medium transition"
-                >
-                  <img src="/assets/exit.svg" alt="Exit" className="w-4 h-4 flex-shrink-0" />
-                  Leave session
-                </button>
-              </div>
-
-              {/* Go to workspace */}
-              <div className="flex flex-col items-center justify-center flex-1 gap-4 py-12">
-                <p className="text-sm text-gray-500">You're in <span className="font-medium text-gray-700">{activeSession.expertName}'s</span> session.</p>
-                <button
-                  onClick={() => router.push("/student/classroom")}
-                  className="px-6 py-3 bg-primary-100 rounded-2xl inline-flex justify-center items-center gap-2 hover:bg-indigo-700 transition"
-                >
-                  <span className="text-white text-md font-medium leading-6">Open Workspace</span>
-                </button>
               </div>
             </div>
           )}
@@ -288,7 +319,6 @@ function StudentDashboardInner() {
             <div className="border-t border-gray-100" />
 
             <div className="py-4 space-y-5">
-              {/* Your Name */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1.5">Your Name</label>
                 <input
@@ -300,7 +330,6 @@ function StudentDashboardInner() {
                 />
               </div>
 
-              {/* Session Code */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1.5">Session Code</label>
                 <input
