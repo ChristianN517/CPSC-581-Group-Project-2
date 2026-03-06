@@ -1,6 +1,6 @@
 "use client";
 
-//Wall Specific Module - IN CLASSROOM
+//Wall Specific Module
 import { useRef, useState, useCallback, useEffect } from "react";
 import { Canvas, useThree } from "@react-three/fiber";
 import { OrbitControls, Stage} from "@react-three/drei";

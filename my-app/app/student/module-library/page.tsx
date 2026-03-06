@@ -4,16 +4,18 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 
+//Student module selection
 
 export default function StudentModuleLibrary() {
   const [activeTab, setActiveTab] = useState("modules");
   const router = useRouter();
 
   const activities = [
-    { name: "The Pyramid", status: "completed" },
-    { name: "Learn Your Tools", status: "in-progress" },
-    { name: "Sketching Basics", status: "locked" },
-    { name: "3D Modeling Intro", status: "locked" },
+    { name: "The Wall", status: "completed"},
+    { name: "The Pyramid", status: "completed"},
+    { name: "Learn Your Tools", status: "in-progress"},
+    { name: "Sketching Basics", status: "locked"},
+    { name: "3D Modeling Intro", status: "locked"},
     { name: "Mini-Project", status: "locked" },
     { name: "Assemblies", status: "locked" },
     { name: "Rendering Basics", status: "locked" },
@@ -69,7 +71,6 @@ export default function StudentModuleLibrary() {
             </div>
 
 
-
             <div className="grid grid-cols-3 gap-6">
               {activities.map((activity, index) => {
                 const isLocked = activity.status === "locked";
@@ -79,7 +80,7 @@ export default function StudentModuleLibrary() {
                 return (
                   <div
                     key={index}
-                    onClick={() => { if (!isLocked) router.push(`/student/work-area`); }}
+                    onClick={() => { if (!isLocked) router.push(`/student/work-area/${index}`); }}
                     className={`rounded-xl shadow p-8 flex flex-col items-center justify-center text-center transition cursor-pointer text-black
                     ${isLocked
                         ? "bg-gray-200 text-gray-600 cursor-not-allowed"

@@ -2,6 +2,8 @@
 
 import Link from "next/link";
 
+//eventual bridge module
+
 export default function BridgeComingSoon() {
     return (
         <div className="flex flex-col bg-canvas items-center justify-center gap-4" style={{ height: "100vh" }}>

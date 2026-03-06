@@ -1,7 +1,6 @@
 "use client";
 
-//Expert Pyramid Module
-
+//Pyramid Specific Module
 import { useRef, useState, useCallback, useEffect } from "react";
 import { Canvas, useThree } from "@react-three/fiber";
 import { OrbitControls } from "@react-three/drei";
@@ -9,17 +8,9 @@ import * as THREE from "three";
 import type { OrbitControls as OrbitControlsImpl } from "three-stdlib";
 import { Baseplate } from "@/components/Baseplate";
 import { Brick } from "@/components/Brick";
-import wallData from "@/modules/pyramid.json";
-import { ModuleModel } from "@/components/ModuleModel";
-import Link from "next/link";
-
-export interface BrickData {
-  id: string;
-  position: [number, number, number];
-  dimensions: [number, number, number];
-  color: string;
-  layer: number;
-}
+import { type BrickData } from "@/components/Workspace";
+import pyramidData from "@/modules/pyramid.json"
+import { ObjectiveModel } from "@/components/ObjectiveModel";
 
 function CameraResetter({ onReady }: { onReady: (reset: () => void) => void }) {
   const { controls } = useThree();
@@ -32,25 +23,20 @@ function CameraResetter({ onReady }: { onReady: (reset: () => void) => void }) {
 }
 
 export default function CadSession() {
+  const [selectedTool, setSelectedTool] = useState("Brick 2x4");
   const [showSettings, setShowSettings] = useState(false);
   const [ctxMenu, setCtxMenu] = useState<{ x: number; y: number } | null>(null);
   const [bricks, setBricks] = useState<BrickData[]>([]);
-  const [history, setHistory] = useState<BrickData[][]>([]);
   const resetCameraRef = useRef<(() => void) | null>(null);
-  const [completedLayers, setCompletedLayers] = useState<number[]>([]);
-
-  const module = { name: "The Pyramid" };
 
   const BASEPLATE_SIZE = 10;
 
-  // brick types for "The Wall"
+  // brick types for "The Pyramid"
   const tools: { label: string; dims: [number, number, number]; color: string }[] = [
-    { label: "Brick 1x2", dims: [1, 1, 2], color: "#BF5426" },
-    { label: "Brick 1x2", dims: [1, 1, 2], color: "#D2892D" },
-    { label: "Plate 1x6", dims: [1, 0.4, 6], color: "#E8B987" },
-    { label: "Brick 1x4", dims: [1, 1, 4], color: "#26bfa0" },
-    { label: "Brick 2x4", dims: [2, 1, 4], color: "#6970eb" },
-    { label: "Brick 2x2", dims: [2, 1, 2], color: "#d45050" }
+    { label: "Brick 1x2", dims: [1, 1, 2], color: "#457B9D" },
+    { label: "Brick 1x2", dims: [1, 1, 2], color: "#A8DADC" },
+    { label: "Brick 2x2", dims: [2, 1, 2], color: "#E63946" },
+    { label: "Plate 2x6", dims: [2, 0.4, 6], color: "#daa569" },
   ];
 
   const [selectedIndex, setSelectedIndex] = useState(0);
@@ -102,55 +88,10 @@ export default function CadSession() {
     pressOrigin.current = null;
   }
 
-   function deleteBrick(id: string) {
+  function deleteBrick(id: string) {
     setBricks((prev) => prev.filter((b) => b.id !== id));
-  }
+}
 
-  function handleUndo() {
-    setHistory((prev) => {
-      if (prev.length === 0) return prev;
-
-      const previousState = prev[prev.length - 1];
-      setBricks(previousState);
-
-      return prev.slice(0, -1);
-    });
-  }
-
-  const usedLayers = Array.from(new Set(bricks.map((b) => b.layer))).sort((a, z) => a - z);
-  useEffect(() => {
-  const targetData = wallData.targetData as BrickData[];
-  if (!targetData || targetData.length === 0) return;
-
-  usedLayers.forEach(layerNum => {
-    const layerBricks = bricks.filter(b => b.layer === layerNum);
-    const targetLayerBricks = targetData.filter(b => b.layer === layerNum);
-
-    // layer is complete if every brick in the target layer exists in placed bricks
-    const layerDone = targetLayerBricks.every((tb: { position: number[]; dimensions: number[]; }) =>
-      layerBricks.some(b =>
-        b.position[0] === tb.position[0] &&
-        b.position[1] === tb.position[1] &&
-        b.position[2] === tb.position[2] &&
-        b.dimensions[0] === tb.dimensions[0] &&
-        b.dimensions[1] === tb.dimensions[1] &&
-        b.dimensions[2] === tb.dimensions[2]
-      )
-    );
-
-    if (layerDone && !completedLayers.includes(layerNum)) {
-      setCompletedLayers(prev => [...prev, layerNum]);
-      alert(`Layer ${layerNum} completed!`);
-    }
-  });
-
-  // all layers complete when all target layers are in completedLayers
-  const targetLayers = Array.from(new Set(targetData.map(b => b.layer)));
-  if (targetLayers.every(l => completedLayers.includes(l))) {
-    alert("All layers completed! Module finished!");
-  }
-
-}, [bricks, usedLayers, completedLayers]);
   // returns true if the new brick's 3D footprint overlaps any existing brick.
   // epsilon prevents adjacent touching faces from counting as collisions.
   function checkCollision(
@@ -186,9 +127,6 @@ export default function CadSession() {
     if (checkCollision(newPos, currentTool, bricks)) return;
 
     const layer = Math.floor(y) + 1;
-
-    setHistory((prev) => [...prev, bricks]);
-
     setBricks((prev) => [
       ...prev,
       {
@@ -201,9 +139,8 @@ export default function CadSession() {
     ]);
   }
 
-  const targetBricks = wallData.targetData as BrickData[];
-
-  const uniqueLayers = Array.from(new Set(targetBricks.map(b => b.layer))).sort((a, b) => a - b);
+  // Derive unique layer numbers from placed bricks
+  const usedLayers = Array.from(new Set(bricks.map((b) => b.layer))).sort((a, z) => a - z);
 
   return (
     <div className="flex flex-col h-screen overflow-hidden bg-gray-200">
@@ -211,28 +148,61 @@ export default function CadSession() {
       {/* top */}
       <div className="h-14 bg-white shadow flex items-center justify-between px-6">
 
-        <Link
-          href="/expert/module-library"
-          className="flex font-medium text-gray-700 hover:text-gray-900 transition w-100 items-center gap-2"
-        >
-          Back to Library
-        </Link>
-
-        <button
-        onClick={handleUndo}
-        className="px-4 py-2 bg-gray-700 text-white text-sm font-medium rounded-md cursor-pointer"
-      >
-        Undo
-      </button>
+        {/* student name*/}
+        <div className="font-semibold text-black">Student Name</div>
 
         {/* module name */}
-        <div className="flex font-medium text-gray-600 items-center justify-center w-full">
-          {module.name}
+        <div className="font-medium text-gray-600">
+          Introduction to CAD
         </div>
 
+        {/* right buttons */}
+        <div className="flex items-center gap-4">
+          <button className="px-3 py-1 border rounded hover:bg-gray-100 text-black">
+            Talk
+          </button>
+
+          <span className="text-green-600 text-sm font-semibold">
+            Phone Linked
+          </span>
+
+          <button className="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600">
+            Leave Class
+          </button>
+
+          {/* dropdown menu */}
+          <div className="relative">
+            <button onClick={() => setShowSettings(!showSettings)} className="text-lg hover:opacity-70 text-black" >
+              Menu
+            </button>
+
+            {showSettings && (
+              <div className="absolute right-0 mt-2 w-48 bg-white shadow-lg rounded-lg border z-50 text-black">
+                <button
+                  onClick={() => {
+                    alert("Expert has been notified.");
+                    setShowSettings(false);
+                  }}
+                  className="block w-full text-left px-4 py-2 hover:bg-gray-100 text-sm"
+                >
+                  Notify Expert
+                </button>
+
+                <button
+                  onClick={() => {
+                    alert("Opening contact channel...");
+                    setShowSettings(false);
+                  }}
+                  className="block w-full text-left px-4 py-2 hover:bg-gray-100 text-sm"
+                >
+                  Contact Expert
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
       </div>
 
-      {/* bottom section */}
       <div className="flex flex-1 min-h-0 overflow-hidden">
 
         {/* sidebar */}
@@ -246,12 +216,12 @@ export default function CadSession() {
               <div
                 key={idx}
                 onClick={() => setSelectedIndex(idx)}
-                className={`p-3 rounded-lg text-center cursor-default transition text-xs font-medium text-black flex items-center justify-center gap-2
-                  ${selectedIndex === idx
+                className={`p-3 rounded-lg text-center cursor-pointer transition text-xs font-medium text-black flex items-center justify-center gap-2
+                              ${selectedIndex === idx
                     ? "bg-indigo-200 border border-primary-100"
-                    : "bg-gray-200"
+                    : "bg-gray-200 hover:bg-gray-300"
                   }
-                `}
+                            `}
               >
                 <div
                   className="w-3 h-3 rounded-full border border-black/20"
@@ -266,34 +236,26 @@ export default function CadSession() {
 
           <h3 className="text-sm font-semibold mb-2 text-neutral-900">LAYERS</h3>
 
-          {/* Dynamic layer panel — populated from static JSON module data */}
+          {/* Dynamic layer panel — derived from placed bricks, scrollable */}
           <div
             className="flex-1 min-h-0 space-y-3 overflow-y-auto"
             style={{ scrollbarWidth: "none" }}
           >
-            {uniqueLayers.map(layerNum => {
-              const bricksInLayer = targetBricks.filter(b => b.layer === layerNum);
-
+            {usedLayers.length === 0 && (
+              <p className="text-xs text-gray-400">No bricks placed yet.</p>
+            )}
+            {usedLayers.map((layerNum) => {
+              const layerBricks = bricks.filter((b) => b.layer === layerNum);
               return (
-                <div key={`layer-group-${layerNum}`}>
-                  <p className="text-xs font-semibold text-gray-500 mb-1 flex items-center gap-1">
-                    Layer {layerNum} ({bricksInLayer.length} blocks)
-
-                    {completedLayers.includes(layerNum) && (
-                      <span className="text-green-500">✅</span>
-                    )}
-                  </p>
-                  <div className="space-y-1 mt-2">
-                    {bricksInLayer.map((brick) => (
+                <div key={layerNum}>
+                  <p className="text-xs font-semibold text-gray-500 mb-1">Layer {layerNum}</p>
+                  <div className="space-y-1">
+                    {layerBricks.map((brick) => (
                       <div
-                        key={`ui-brick-${brick.id}`}
-                        className="flex items-center gap-2 px-3 py-1.5 rounded text-xs bg-white text-black"
+                        key={brick.id}
+                        className="flex items-center px-3 py-1.5 rounded text-xs bg-white text-black"
                       >
-                        <div
-                          className="w-3 h-3 rounded-sm border border-black/10"
-                          style={{ backgroundColor: brick.color }}
-                        />
-                        <span>{brick.dimensions[0]}×{brick.dimensions[2]} Block</span>
+                        <span>{brick.dimensions[0]}×{brick.dimensions[2]}</span>
                       </div>
                     ))}
                   </div>
@@ -327,7 +289,8 @@ export default function CadSession() {
               onPlaceBrick={handlePlaceBrick}
             />
 
-            <ModuleModel targetBricks={wallData.targetData as BrickData[]} />
+            {/* Can probably add an if statement here, to change the ObjectiveModel to save on coping this code. */}
+            <ObjectiveModel targetBricks={pyramidData.targetData as BrickData[]} />
 
             {bricks.map((brick) => (
               <Brick
