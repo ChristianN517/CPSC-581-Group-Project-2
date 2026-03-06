@@ -99,7 +99,7 @@ export default function CadSession() {
 
   function deleteBrick(id: string) {
     setBricks((prev) => prev.filter((b) => b.id !== id));
-}
+ }
 
 function handleUndo() {
     setHistory((prev) => {

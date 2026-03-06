@@ -6,6 +6,7 @@ import { OrbitControls } from "@react-three/drei";
 import { Baseplate } from "./Baseplate";
 import { Brick } from "./Brick";
 
+
 export interface BrickData {
     id: string;
     position: [number, number, number];
@@ -24,6 +25,11 @@ export function snapToGrid(intersectValue: number, dimensionSize: number): numbe
 }
 
 export default function Workspace() {
+
+    function deleteBrick(id: string) {
+    setBricks((prev) => prev.filter((b) => b.id !== id));
+    }
+
     const [bricks, setBricks] = useState<BrickData[]>([]);
     const [currentTool, setCurrentTool] = useState<[number, number, number]>([2, 1, 4]);
 
@@ -66,6 +72,7 @@ export default function Workspace() {
                         color={brick.color}
                         currentTool={currentTool}
                         onPlaceBrick={handlePlaceBrick}
+                        onDelete={() => deleteBrick(brick.id)}
                     />
                 ))}
 

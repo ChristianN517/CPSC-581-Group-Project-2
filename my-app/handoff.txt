@@ -19,3 +19,10 @@ Other tasks (secondary):
 - Standardize the dashboard design for students (checkout the expert dashboard for updated design)
 - Consider removing /expert and lead straight to the expert dashboard - content are the same (same thing as /student)
 - After exporting a created module, it doesnt get saved to the dashboard (you have to manually add it after creating the json) - might want to find a more efficient way
+
+
+Chris March 4 (updated via what was said on discord)
+- deletion of placed bricks + undo button
+- Mark a layer as completed when all brick in thatr layer are placed and match the outline
+- made a pyramid Module
+
