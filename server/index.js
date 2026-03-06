@@ -24,11 +24,12 @@ io.on("connection", (socket) => {
     console.log("connected:", socket.id);
 
     // Expert creates a session
-    socket.on("session:create", ({ className }, callback) => {
+    socket.on("session:create", ({ className, module }, callback) => {
         const code = generateCode();
         sessions[code] = {
             expertSocketId: socket.id,
             className,
+            module,
             students: {},
         };
         socket.join(code);
@@ -61,7 +62,7 @@ io.on("connection", (socket) => {
             name: studentName,
         });
 
-        callback({ success: true, className: session.className });
+        callback({ success: true, className: session.className, module: session.module });
         console.log(`${studentName} joined session ${code}`);
     });
 

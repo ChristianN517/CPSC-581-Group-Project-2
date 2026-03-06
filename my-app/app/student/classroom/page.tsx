@@ -9,6 +9,7 @@ import type { OrbitControls as OrbitControlsImpl } from "three-stdlib";
 import { Baseplate } from "@/components/Baseplate";
 import { Brick } from "@/components/Brick";
 import wallData from "@/modules/wall.json";
+import pyramidData from "@/modules/pyramid.json";
 import { ObjectiveModel } from "@/components/ObjectiveModel";
 import { socket } from "@/lib/socket";
 import Link from "next/link";
@@ -43,12 +44,37 @@ function CadSessionInner() {
 
     const BASEPLATE_SIZE = 10;
 
-    // brick types for "The Wall"
-    const tools: { label: string; dims: [number, number, number]; color: string }[] = [
-        { label: "Brick 1x2", dims: [1, 1, 2], color: "#BF5426" },
-        { label: "Brick 1x2", dims: [1, 1, 2], color: "#D2892D" },
-        { label: "Plate 1x6", dims: [1, 0.4, 6], color: "#E8B987" },
-    ];
+    const [sessionModule, setSessionModule] = useState("The Wall");
+
+    useEffect(() => {
+        if (typeof window !== "undefined") {
+            const saved = sessionStorage.getItem("activeSession");
+            if (saved) {
+                try {
+                    const sessionData = JSON.parse(saved);
+                    if (sessionData.module) setSessionModule(sessionData.module);
+                } catch (e) {
+                    // ignore
+                }
+            }
+        }
+    }, []);
+
+    const isPyramid = sessionModule === "The Pyramid";
+
+    const tools = (isPyramid
+        ? [
+            { label: "Brick 1x2", dims: [1, 1, 2], color: "#BF5426" },
+            { label: "Brick 2x2", dims: [2, 1, 2], color: "#d45050" },
+            { label: "Brick 2x4", dims: [2, 1, 4], color: "#6970eb" },
+        ]
+        : [
+            { label: "Brick 1x2", dims: [1, 1, 2], color: "#BF5426" },
+            { label: "Brick 1x2", dims: [1, 1, 2], color: "#D2892D" },
+            { label: "Plate 1x6", dims: [1, 0.4, 6], color: "#E8B987" },
+        ]) as { label: string; dims: [number, number, number]; color: string }[];
+
+    const targetData = isPyramid ? pyramidData.targetData : wallData.targetData;
 
     const [selectedIndex, setSelectedIndex] = useState(0);
     const currentTool = tools[selectedIndex].dims;
@@ -325,7 +351,7 @@ function CadSessionInner() {
                             onPlaceBrick={handlePlaceBrick}
                         />
 
-                        <ObjectiveModel targetBricks={wallData.targetData as BrickData[]} />
+                        <ObjectiveModel targetBricks={targetData as BrickData[]} />
 
                         {bricks.map((brick) => (
                             <Brick

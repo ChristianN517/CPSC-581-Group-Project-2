@@ -9,6 +9,7 @@ import { socket } from "@/lib/socket";
 interface ActiveSession {
   code: string;
   className: string;
+  module: string;
 }
 
 function StudentDashboardInner() {
@@ -75,13 +76,17 @@ function StudentDashboardInner() {
     socket.emit(
       "session:join",
       { code: joinCode.trim(), studentName: studentName.trim() },
-      (res: { success?: boolean; className?: string; error?: string }) => {
+      (res: { success?: boolean; className?: string; module?: string; error?: string }) => {
         setIsJoining(false);
         if (res.error) {
           setJoinError(res.error);
           return;
         }
-        setActiveSession({ code: joinCode.trim(), className: res.className ?? "" });
+        setActiveSession({
+          code: joinCode.trim(),
+          className: res.className ?? "",
+          module: res.module ?? "The Wall"
+        });
         setShowModal(false);
         setJoinCode("");
       }

@@ -100,7 +100,7 @@ function ExpertDashboardInner() {
     };
   }, [handleStudentJoined, handleStudentLeft, handleBoardUpdate]);
 
-  // ── Handlers ──────────────────────────────────────────
+  // Handlers
   function handleOpenClassroom() {
     if (!sessionName.trim()) return;
     setIsCreating(true);
@@ -109,7 +109,7 @@ function ExpertDashboardInner() {
 
     socket.emit(
       "session:create",
-      { className: sessionName.trim() },
+      { className: sessionName.trim(), module: selectedModule },
       (res: { code?: string; error?: string }) => {
         setIsCreating(false);
         if (res.error) {
