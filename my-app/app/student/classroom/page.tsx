@@ -3,24 +3,18 @@
 import { useRef, useState, useCallback, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Canvas, useThree } from "@react-three/fiber";
-import { OrbitControls } from "@react-three/drei";
+import { OrbitControls, Stage } from "@react-three/drei";
 import * as THREE from "three";
-import type { OrbitControls as OrbitControlsImpl } from "three-stdlib";
+import { OrbitControls as OrbitControlsImpl } from "three-stdlib";
 import { Baseplate } from "@/components/Baseplate";
 import { Brick } from "@/components/Brick";
+import { type BrickData } from "@/components/Workspace";
 import wallData from "@/modules/wall.json";
 import pyramidData from "@/modules/pyramid.json";
 import { ObjectiveModel } from "@/components/ObjectiveModel";
 import { socket } from "@/lib/socket";
 import Link from "next/link";
 
-export interface BrickData {
-    id: string;
-    position: [number, number, number];
-    dimensions: [number, number, number];
-    color: string;
-    layer: number;
-}
 
 function CameraResetter({ onReady }: { onReady: (reset: () => void) => void }) {
     const { controls } = useThree();

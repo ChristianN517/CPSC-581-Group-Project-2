@@ -4,6 +4,8 @@
 
 import { ThreeEvent } from "@react-three/fiber";
 import { snapToGrid } from "./Workspace";
+import { DragControls, OrbitControls } from "@react-three/drei";
+
 
 interface BrickProps {
     position: [number, number, number];
@@ -15,6 +17,7 @@ interface BrickProps {
 }
 
 export function Brick({ position, dimensions, color, currentTool, onPlaceBrick, onDelete }: BrickProps) {
+    
     const [w, h, d] = dimensions;
 
     const studs: { sx: number; sz: number }[] = [];
@@ -31,7 +34,7 @@ export function Brick({ position, dimensions, color, currentTool, onPlaceBrick, 
         const newX = snapToGrid(x + e.face.normal.x * 0.1, currentTool[0]);
         const newZ = snapToGrid(z + e.face.normal.z * 0.1, currentTool[2]);
         const newY = position[1] + h / 2 + currentTool[1] / 2;
-        onPlaceBrick(newX, newY, newZ);
+        onPlaceBrick(newX, newY, newZ)
     }
 
     function handleDelete(e: ThreeEvent<MouseEvent>) {
@@ -41,8 +44,10 @@ export function Brick({ position, dimensions, color, currentTool, onPlaceBrick, 
     }
     }
 
+
     return (
         <group position={position}>
+            <DragControls>
             <mesh castShadow receiveShadow onClick={handleClick} onPointerUp={handleDelete}>
                 <boxGeometry args={[w, h, d]} />
                 <meshStandardMaterial color={color} />
@@ -52,7 +57,7 @@ export function Brick({ position, dimensions, color, currentTool, onPlaceBrick, 
                     <cylinderGeometry args={[0.18, 0.18, 0.12, 16]} />
                     <meshStandardMaterial color={color} />
                 </mesh>
-            ))}
+            ))}</DragControls>
         </group>
     );
 }

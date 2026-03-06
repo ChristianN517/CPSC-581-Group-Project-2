@@ -1,16 +1,17 @@
 "use client";
 
-//Create new module - blank board for expert
-
+//Wall Specific Module
 import { useRef, useState, useCallback, useEffect } from "react";
 import { Canvas, useThree } from "@react-three/fiber";
-import { OrbitControls } from "@react-three/drei";
+import { OrbitControls, Stage} from "@react-three/drei";
 import * as THREE from "three";
-import type { OrbitControls as OrbitControlsImpl } from "three-stdlib";
+import {OrbitControls as OrbitControlsImpl } from "three-stdlib";
 import { Baseplate } from "@/components/Baseplate";
 import { Brick } from "@/components/Brick";
 import { type BrickData } from "@/components/Workspace";
-import Link from "next/link";
+import wallData from "@/modules/wall.json";
+import { ObjectiveModel } from "@/components/ObjectiveModel";
+
 
 function CameraResetter({ onReady }: { onReady: (reset: () => void) => void }) {
     const { controls } = useThree();
@@ -23,24 +24,19 @@ function CameraResetter({ onReady }: { onReady: (reset: () => void) => void }) {
 }
 
 export default function CadSession() {
+    const [selectedTool, setSelectedTool] = useState("Brick 2x4");
     const [showSettings, setShowSettings] = useState(false);
     const [ctxMenu, setCtxMenu] = useState<{ x: number; y: number } | null>(null);
     const [bricks, setBricks] = useState<BrickData[]>([]);
-    const [history, setHistory] = useState<BrickData[][]>([]);
     const resetCameraRef = useRef<(() => void) | null>(null);
-
-    const module = { name: "Create New Module" };
 
     const BASEPLATE_SIZE = 10;
 
-    // brick types for "The Wall", add or remove as needed for new modules
+    // brick types for "The Wall"
     const tools: { label: string; dims: [number, number, number]; color: string }[] = [
         { label: "Brick 1x2", dims: [1, 1, 2], color: "#BF5426" },
         { label: "Brick 1x2", dims: [1, 1, 2], color: "#D2892D" },
         { label: "Plate 1x6", dims: [1, 0.4, 6], color: "#E8B987" },
-        { label: "Brick 1x4", dims: [1, 1, 4], color: "#26bfa0" },
-        { label: "Brick 2x4", dims: [2, 1, 4], color: "#6970eb" },
-        { label: "Brick 2x2", dims: [2, 1, 2], color: "#d45050" }
     ];
 
     const [selectedIndex, setSelectedIndex] = useState(0);
@@ -93,18 +89,7 @@ export default function CadSession() {
     }
 
     function deleteBrick(id: string) {
-        setBricks((prev) => prev.filter((b) => b.id !== id));
-    }
-
-    function handleUndo() {
-        setHistory((prev) => {
-            if (prev.length === 0) return prev;
-
-            const previousState = prev[prev.length - 1];
-            setBricks(previousState);
-
-            return prev.slice(0, -1);
-        });
+    setBricks((prev) => prev.filter((b) => b.id !== id));
     }
 
     // returns true if the new brick's 3D footprint overlaps any existing brick.
@@ -142,9 +127,6 @@ export default function CadSession() {
         if (checkCollision(newPos, currentTool, bricks)) return;
 
         const layer = Math.floor(y) + 1;
-
-        setHistory((prev) => [...prev, bricks]);
-
         setBricks((prev) => [
             ...prev,
             {
@@ -166,44 +148,61 @@ export default function CadSession() {
             {/* top */}
             <div className="h-14 bg-white shadow flex items-center justify-between px-6">
 
-                <Link
-                    href="/expert?tab=modules"
-                    className="font-medium text-gray-700 hover:text-gray-900 transition flex items-center gap-2"
-                >
-                    Back to Library
-                </Link>
-
-                <button
-                    onClick={handleUndo}
-                    className="px-4 py-2 bg-gray-700 text-white text-sm font-medium rounded-md cursor-pointer"
-                >
-                    Undo
-                </button>
+                {/* student name*/}
+                <div className="font-semibold text-black">Student Name</div>
 
                 {/* module name */}
                 <div className="font-medium text-gray-600">
-                    {module.name}
+                    Introduction to CAD 
                 </div>
 
                 {/* right buttons */}
                 <div className="flex items-center gap-4">
-                    <button
-                        className="px-4 py-2 bg-neutral-900 text-white text-sm font-medium rounded-md cursor-pointer"
-                        onClick={() => {
-                            // This copies the exact JSON data of the bui;d
-                            navigator.clipboard.writeText(JSON.stringify(bricks, null, 2));
-                            alert("Module data copied to clipboard!");
-                        }}
-                    >
-                        Export Module
+                    <button className="px-3 py-1 border rounded hover:bg-gray-100 text-black">
+                        Talk
                     </button>
 
+                    <span className="text-green-600 text-sm font-semibold">
+                        Phone Linked
+                    </span>
 
+                    <button className="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600">
+                        Leave Class
+                    </button>
 
+                    {/* dropdown menu */}
+                    <div className="relative">
+                        <button onClick={() => setShowSettings(!showSettings)} className="text-lg hover:opacity-70 text-black" >
+                            Menu
+                        </button>
+
+                        {showSettings && (
+                            <div className="absolute right-0 mt-2 w-48 bg-white shadow-lg rounded-lg border z-50 text-black">
+                                <button
+                                    onClick={() => {
+                                        alert("Expert has been notified.");
+                                        setShowSettings(false);
+                                    }}
+                                    className="block w-full text-left px-4 py-2 hover:bg-gray-100 text-sm"
+                                >
+                                    Notify Expert
+                                </button>
+
+                                <button
+                                    onClick={() => {
+                                        alert("Opening contact channel...");
+                                        setShowSettings(false);
+                                    }}
+                                    className="block w-full text-left px-4 py-2 hover:bg-gray-100 text-sm"
+                                >
+                                    Contact Expert
+                                </button>
+                            </div>
+                        )}
+                    </div>
                 </div>
             </div>
 
-            {/* bottom section */}
             <div className="flex flex-1 min-h-0 overflow-hidden">
 
                 {/* sidebar */}
@@ -218,11 +217,11 @@ export default function CadSession() {
                                 key={idx}
                                 onClick={() => setSelectedIndex(idx)}
                                 className={`p-3 rounded-lg text-center cursor-pointer transition text-xs font-medium text-black flex items-center justify-center gap-2
-                  ${selectedIndex === idx
+                              ${selectedIndex === idx
                                         ? "bg-indigo-200 border border-primary-100"
                                         : "bg-gray-200 hover:bg-gray-300"
                                     }
-                `}
+                            `}
                             >
                                 <div
                                     className="w-3 h-3 rounded-full border border-black/20"
@@ -247,7 +246,6 @@ export default function CadSession() {
                         )}
                         {usedLayers.map((layerNum) => {
                             const layerBricks = bricks.filter((b) => b.layer === layerNum);
-
                             return (
                                 <div key={layerNum}>
                                     <p className="text-xs font-semibold text-gray-500 mb-1">Layer {layerNum}</p>
@@ -290,6 +288,8 @@ export default function CadSession() {
                             currentTool={currentTool}
                             onPlaceBrick={handlePlaceBrick}
                         />
+
+                        <ObjectiveModel targetBricks={wallData.targetData as BrickData[]} />
 
                         {bricks.map((brick) => (
                             <Brick
