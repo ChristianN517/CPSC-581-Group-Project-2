@@ -5,6 +5,7 @@
 import { ThreeEvent } from "@react-three/fiber";
 import { snapToGrid } from "./Workspace";
 import { DragControls, OrbitControls } from "@react-three/drei";
+import { useState, KeyboardEvent } from "react";
 
 
 interface BrickProps {
@@ -12,18 +13,45 @@ interface BrickProps {
     dimensions: [number, number, number]; // [width, height, depth]
     color: string;
     currentTool: [number, number, number];
-    onPlaceBrick?: (x: number, y: number, z: number) => void;
+    onPlaceBrick?: (x: number, y: number, z: number, newDims: [number, number, number]) => void;
     onDelete?: () => void;
 }
 
 export function Brick({ position, dimensions, color, currentTool, onPlaceBrick, onDelete }: BrickProps) {
 
-    const [w, h, d] = dimensions;
+    const [dims, setDims] = useState<[number, number, number]>(dimensions);
+    const [pos, setPos] = useState<[number, number, number]>(position);
+    const [w, h, d] = dims;
+
+    //Used during Rotation
+    const [isMoved, setIsMoved] = useState<boolean>(false);
+    const togglePosition = () => {
+        setIsMoved(!isMoved);
+    }
+    
+
 
     const studs: { sx: number; sz: number }[] = [];
     for (let col = 0; col < w; col++) {
         for (let row = 0; row < d; row++) {
             studs.push({ sx: col - (w - 1) / 2, sz: row - (d - 1) / 2 });
+        }
+    }
+
+    // Rotate brick when pressing middle button
+    //JJ: I would like to make this press r on keyboard, but keyboard events are tricker
+    const handleRotate = (e: ThreeEvent<PointerEvent>) => {
+    if (e.button === 1) { //middle click
+        e.stopPropagation();
+        setDims(([W, H, D]) => [D, H, W]); // Swap X/Z, keep Y
+            //If a brick is even/even or odd/odd, it rotates fine. This is for odd x even blocks
+            if ((dimensions[0] + dimensions[2])%2 != 0){
+                if (isMoved){
+                    setPos(prev => [prev[0] + 0.5, prev[1], prev[2] + 0.5]);
+                } else {
+                    setPos(prev => [prev[0] - 0.5, prev[1], prev[2] - 0.5]);
+                }
+            }
         }
     }
 
@@ -34,7 +62,7 @@ export function Brick({ position, dimensions, color, currentTool, onPlaceBrick, 
         const newX = snapToGrid(x + e.face.normal.x * 0.1, currentTool[0]);
         const newZ = snapToGrid(z + e.face.normal.z * 0.1, currentTool[2]);
         const newY = position[1] + h / 2 + currentTool[1] / 2;
-        onPlaceBrick(newX, newY, newZ)
+        onPlaceBrick(newX, newY, newZ, dims)
     }
 
     function handleDelete(e: ThreeEvent<MouseEvent>) {
@@ -43,12 +71,23 @@ export function Brick({ position, dimensions, color, currentTool, onPlaceBrick, 
             if (onDelete) onDelete();
         }
     }
+    
+    function handlePointerDown(e:ThreeEvent<PointerEvent>){
+        handleRotate(e);
+        togglePosition();
+    }
 
 
     return (
-        <group position={position}>
+        <group position={pos}>
             <DragControls>
-                <mesh castShadow receiveShadow onClick={handleClick} onPointerUp={handleDelete}>
+                <mesh 
+                    castShadow 
+                    receiveShadow 
+                    onClick={handleClick} 
+                    onPointerDown={handlePointerDown}
+                    onPointerUp={handleDelete}
+                    >
                     <boxGeometry args={[w, h, d]} />
                     <meshStandardMaterial color={color} />
                 </mesh>
@@ -57,7 +96,8 @@ export function Brick({ position, dimensions, color, currentTool, onPlaceBrick, 
                         <cylinderGeometry args={[0.18, 0.18, 0.12, 16]} />
                         <meshStandardMaterial color={color} />
                     </mesh>
-                ))}</DragControls>
+                ))}
+                </DragControls>
         </group>
     );
 }
