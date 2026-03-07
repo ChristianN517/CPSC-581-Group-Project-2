@@ -28,8 +28,6 @@ export function Brick({ position, dimensions, color, currentTool, onPlaceBrick, 
     const togglePosition = () => {
         setIsMoved(!isMoved);
     }
-    
-
 
     const studs: { sx: number; sz: number }[] = [];
     for (let col = 0; col < w; col++) {
@@ -72,6 +70,7 @@ export function Brick({ position, dimensions, color, currentTool, onPlaceBrick, 
         }
     }
     
+    //Used for Rotate and toggle. Will also need to change this even to keypress R
     function handlePointerDown(e:ThreeEvent<PointerEvent>){
         handleRotate(e);
         togglePosition();
@@ -79,25 +78,45 @@ export function Brick({ position, dimensions, color, currentTool, onPlaceBrick, 
 
 
     return (
-        <group position={pos}>
-            <DragControls>
-                <mesh 
-                    castShadow 
-                    receiveShadow 
-                    onClick={handleClick} 
-                    onPointerDown={handlePointerDown}
-                    onPointerUp={handleDelete}
-                    >
-                    <boxGeometry args={[w, h, d]} />
-                    <meshStandardMaterial color={color} />
-                </mesh>
-                {studs.map(({ sx, sz }, i) => (
-                    <mesh key={i} position={[sx, h / 2 + 0.06, sz]} castShadow onClick={handleClick} onPointerUp={handleDelete}>
-                        <cylinderGeometry args={[0.18, 0.18, 0.12, 16]} />
+        <DragControls
+            axisLock="y" 
+            // Manual transform handling to ensure snapping
+            autoTransform={false} 
+            onDrag={(localMatrix) => {
+                // Extract X and Z from the local translation matrix (indices 12 and 14)
+                const rawX = localMatrix.elements[12];
+                const rawZ = localMatrix.elements[14];
+                
+                setPos([
+                    snapToGrid(rawX, currentTool[0]), 
+                    position[1], //y stays the same
+                    snapToGrid(rawZ, currentTool[2])
+                ]);
+                //Again, even x odd blocks need special treatment
+                //JJ: this needs to be fixed
+                if ((dimensions[0] + dimensions[2])%2 != 0 && isMoved){
+                    setPos(prev => [prev[0] + 0.5, prev[1], prev[2] + 0.5]); 
+                }   
+            }}
+        >
+            <group position={pos}>
+                    <mesh 
+                        castShadow 
+                        receiveShadow 
+                        onClick={handleClick} 
+                        onPointerDown={handlePointerDown}
+                        onPointerUp={handleDelete}
+                        >
+                        <boxGeometry args={[w, h, d]} />
                         <meshStandardMaterial color={color} />
                     </mesh>
-                ))}
-                </DragControls>
-        </group>
+                    {studs.map(({ sx, sz }, i) => (
+                        <mesh key={i} position={[sx, h / 2 + 0.06, sz]} castShadow onClick={handleClick} onPointerUp={handleDelete}>
+                            <cylinderGeometry args={[0.18, 0.18, 0.12, 16]} />
+                            <meshStandardMaterial color={color} />
+                        </mesh>
+                    ))}
+            </group>
+        </DragControls>
     );
 }
