@@ -197,7 +197,22 @@ function ExpertDashboardInner() {
 
     const onAnswer = async ({ from, sdp }: any) => {
       try {
-        if (pcRef.current) await pcRef.current.setRemoteDescription(new RTCSessionDescription(sdp));
+        if (!pcRef.current) return;
+        const pc = pcRef.current;
+        const state = pc.signalingState;
+        if (sdp && sdp.type === 'answer') {
+          if (state === 'have-local-offer' || state === 'have-local-offer\r') {
+            await pc.setRemoteDescription(new RTCSessionDescription(sdp));
+          } else {
+            console.warn('Ignoring answer — RTCPeerConnection in unexpected state:', state);
+          }
+        } else {
+          try {
+            await pc.setRemoteDescription(new RTCSessionDescription(sdp));
+          } catch (err) {
+            console.error('Expert failed to handle answer', err);
+          }
+        }
       } catch (err) {
         console.error('Expert failed to handle answer', err);
       }

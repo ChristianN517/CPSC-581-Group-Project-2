@@ -154,7 +154,23 @@ function CadSessionInner() {
             (async () => {
                 try {
                     if (!pcRef.current) return;
-                    await pcRef.current.setRemoteDescription(new RTCSessionDescription(sdp));
+                    // Only apply an answer if we are the offerer and currently have a local offer
+                    const pc = pcRef.current;
+                    const state = pc.signalingState;
+                    if (sdp && sdp.type === 'answer') {
+                        if (state === 'have-local-offer' || state === 'have-local-offer\r' /* defensive */) {
+                            await pc.setRemoteDescription(new RTCSessionDescription(sdp));
+                        } else {
+                            console.warn('Ignoring answer — RTCPeerConnection in unexpected state:', state);
+                        }
+                    } else {
+                        // For non-answer SDPs, attempt to set the remote description defensively
+                        try {
+                            await pc.setRemoteDescription(new RTCSessionDescription(sdp));
+                        } catch (err) {
+                            console.error('Failed to set remote desc from answer', err);
+                        }
+                    }
                 } catch (err) {
                     console.error('Failed to set remote desc from answer', err);
                 }
