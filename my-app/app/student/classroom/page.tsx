@@ -156,9 +156,10 @@ function CadSessionInner() {
                     if (!pcRef.current) return;
                     // Only apply an answer if we are the offerer and currently have a local offer
                     const pc = pcRef.current;
-                    const state = pc.signalingState;
+                    // Normalize signalingState to remove stray CR characters and compare reliably
+                    const state = String(pc.signalingState).replace(/\r/g, '');
                     if (sdp && sdp.type === 'answer') {
-                        if (state === 'have-local-offer' || state === 'have-local-offer\r' /* defensive */) {
+                        if (state === 'have-local-offer') {
                             await pc.setRemoteDescription(new RTCSessionDescription(sdp));
                         } else {
                             console.warn('Ignoring answer — RTCPeerConnection in unexpected state:', state);
