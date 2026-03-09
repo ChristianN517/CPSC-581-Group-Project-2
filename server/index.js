@@ -1,14 +1,36 @@
 const express = require("express");
 const http = require("http");
+const https = require("https");
+const fs = require("fs");
+const path = require("path");
 const { Server } = require("socket.io");
 const cors = require("cors");
 
 const app = express();
 app.use(cors());
 
-const httpServer = http.createServer(app);
-const io = new Server(httpServer, {
-    cors: { origin: "*" }
+// Allow using HTTPS in development by setting SSL_CERT_PATH and SSL_KEY_PATH
+// or placing cert/key at server/cert.pem and server/key.pem. Falls back to HTTP.
+let server;
+try {
+    const certPath = process.env.SSL_CERT_PATH || path.join(__dirname, "cert.pem");
+    const keyPath = process.env.SSL_KEY_PATH || path.join(__dirname, "key.pem");
+    if (fs.existsSync(certPath) && fs.existsSync(keyPath)) {
+        const cert = fs.readFileSync(certPath);
+        const key = fs.readFileSync(keyPath);
+        server = https.createServer({ cert, key }, app);
+        console.log(`Starting socket server with HTTPS using certs: ${certPath}, ${keyPath}`);
+    } else {
+        server = http.createServer(app);
+        console.log("Starting socket server with HTTP (no certs found)");
+    }
+} catch (err) {
+    console.error("Failed to set up HTTPS, falling back to HTTP:", err);
+    server = http.createServer(app);
+}
+
+const io = new Server(server, {
+        cors: { origin: "*" }
 });
 
 // In-memory store
