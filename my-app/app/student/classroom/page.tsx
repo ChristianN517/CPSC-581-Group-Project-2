@@ -14,6 +14,7 @@ import pyramidData from "@/modules/pyramid.json";
 import { ObjectiveModel } from "@/components/ObjectiveModel";
 import { socket } from "@/lib/socket";
 import Link from "next/link";
+import HelpKeywordListener from '@/components/HelpKeywordListener';
 
 
 function CameraResetter({ onReady }: { onReady: (reset: () => void) => void }) {
@@ -392,6 +393,10 @@ function CadSessionInner() {
                         </div>
                     )}
                 </div>
+            </div>
+            {/* speech listener and live word tracking panel */}
+            <div className="absolute bottom-4 right-4 z-50">
+                <HelpKeywordListener />
             </div>
         </div>
     );

@@ -98,6 +98,22 @@ io.on("connection", (socket) => {
         handleStudentLeave(socket);
     });
 
+    // Student requests help
+    socket.on("student:help", () => {
+        const code = socket.data.code;
+        const session = sessions[code];
+        if (!session) return;
+        const student = session.students[socket.id];
+        if (!student) return;
+
+        // Forward the help event to the expert who created the session
+        io.to(session.expertSocketId).emit("student:help", {
+            socketId: socket.id,
+            name: student.name,
+        });
+        console.log(`${student.name} requested help in session ${code}`);
+    });
+
     // Handle disconnect (tab closed etc)
     socket.on("disconnect", () => {
         const { role, code } = socket.data;

@@ -86,6 +86,7 @@ function ExpertDashboardInner() {
   const [isCreating, setIsCreating] = useState(false);
   const [activeSession, setActiveSession] = useState<ActiveSession | null>(null);
   const [selectedStudentSocketId, setSelectedStudentSocketId] = useState<string | null>(null);
+  const [helpAlert, setHelpAlert] = useState<{ socketId: string; name: string } | null>(null);
 
   const activities = [
     { name: "The Wall" },
@@ -139,16 +140,29 @@ function ExpertDashboardInner() {
     []
   );
 
+  const handleStudentHelp = useCallback(({ socketId, name }: { socketId: string; name: string }) => {
+    setActiveSession((prev) => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        students: prev.students.map((s) => s.socketId === socketId ? { ...s, needsHelp: true } : s),
+      };
+    });
+    setHelpAlert({ socketId, name });
+  }, []);
+
   useEffect(() => {
     socket.on("student:joined", handleStudentJoined);
     socket.on("student:left", handleStudentLeft);
     socket.on("board:update", handleBoardUpdate);
+    socket.on("student:help", handleStudentHelp);
     return () => {
       socket.off("student:joined", handleStudentJoined);
       socket.off("student:left", handleStudentLeft);
       socket.off("board:update", handleBoardUpdate);
+      socket.off("student:help", handleStudentHelp);
     };
-  }, [handleStudentJoined, handleStudentLeft, handleBoardUpdate]);
+  }, [handleStudentJoined, handleStudentLeft, handleBoardUpdate, handleStudentHelp]);
 
   // Handlers
   function handleOpenClassroom() {
@@ -466,6 +480,42 @@ function ExpertDashboardInner() {
                 className="px-5 py-2 rounded-lg bg-primary-100 text-white text-sm font-medium hover:bg-primary-100/90 transition disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isCreating ? "Creating…" : "Open Classroom"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {helpAlert && (
+        <div className="fixed top-6 right-6 z-60">
+          <div className="bg-white border border-gray-200 shadow-lg rounded-lg p-4 w-80">
+            <div className="font-semibold text-gray-900">Student {helpAlert.name} needs Help</div>
+            <div className="mt-3 flex justify-end gap-2">
+              <button
+                onClick={() => setHelpAlert(null)}
+                className="px-3 py-1 text-sm text-gray-700 rounded hover:bg-gray-100"
+              >
+                Dismiss
+              </button>
+              <button
+                onClick={() => {
+                  // navigate to classroom and open selected student's full view
+                  setActiveTab("classroom");
+                  setSelectedStudentSocketId(helpAlert.socketId);
+                  // clear the alert
+                  setHelpAlert(null);
+                  // clear the needsHelp flag on the student in activeSession
+                  setActiveSession((prev) => {
+                    if (!prev) return prev;
+                    return {
+                      ...prev,
+                      students: prev.students.map((s) => s.socketId === helpAlert.socketId ? { ...s, needsHelp: false } : s),
+                    };
+                  });
+                }}
+                className="px-3 py-1 bg-primary-100 text-white rounded text-sm"
+              >
+                Go Help
               </button>
             </div>
           </div>

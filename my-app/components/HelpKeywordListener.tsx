@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { socket } from "@/lib/socket";
 
 declare global {
   interface Window {
@@ -63,6 +64,14 @@ export default function HelpKeywordListener() {
               });
 
               if (res.ok) {
+                // notify experts via socket as well
+                try {
+                  if (!socket.connected) socket.connect();
+                  socket.emit("student:help");
+                } catch (err) {
+                  console.error("Failed to emit help socket event:", err);
+                }
+
                 alert('Notification\n\nYou have requested help. Your professor has been notified.');
               } else {
                 console.error('Notification endpoint returned error:', res.statusText || res.status);
