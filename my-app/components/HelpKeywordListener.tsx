@@ -10,7 +10,7 @@ declare global {
   }
 }
 
-export default function HelpKeywordListener() {
+export default function HelpKeywordListener({ disabled = false }: { disabled?: boolean }) {
   const [liveTranscript, setLiveTranscript] = useState("");
   const [status, setStatus] = useState("Starting...");
   const recognitionRef = useRef<any>(null);
@@ -90,19 +90,23 @@ export default function HelpKeywordListener() {
     };
 
     recognition.onend = () => {
-      if (shouldKeepListeningRef.current) {
-        try {
-          recognition.start();
-        } catch (error) {
-          console.error("Recognition restart failed:", error);
-        }
-      } else {
+      if (!shouldKeepListeningRef.current) {
         setStatus("Stopped.");
+        return;
+      }
+      if (disabled) {
+        setStatus("Paused.");
+        return;
+      }
+      try {
+        recognition.start();
+      } catch (error) {
+        console.error("Recognition restart failed:", error);
       }
     };
 
     try {
-      recognition.start();
+      if (!disabled) recognition.start();
     } catch (error) {
       console.error("Recognition start failed:", error);
       setStatus("Could not start speech recognition.");
@@ -119,7 +123,7 @@ export default function HelpKeywordListener() {
         }
       }
     };
-  }, []);
+  }, [disabled]);
 
   return (
     <div className="mt-6 w-full max-w-2xl rounded-lg bg-white/10 p-4 text-white">
