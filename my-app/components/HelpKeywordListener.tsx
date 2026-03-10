@@ -85,6 +85,12 @@ export default function HelpKeywordListener({ disabled = false }: { disabled?: b
     };
 
     recognition.onerror = (event: any) => {
+      // "aborted" is normal when stopping recognition, don't treat as error
+      if (event.error === "aborted") {
+        setStatus("Stopped.");
+        return;
+      }
+
       console.error("Speech recognition error:", event.error);
       setStatus(`Error: ${event.error}`);
     };
