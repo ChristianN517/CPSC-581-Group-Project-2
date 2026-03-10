@@ -1,6 +1,10 @@
 import { io } from "socket.io-client";
 
-// http://localhost:3001
-export const socket = io("https://bricks-9y9l.onrender.com", {
+const isLocalhost = typeof window !== 'undefined' && window.location.hostname === 'localhost';
+const socketUrl = isLocalhost 
+    ? `http://192.168.1.95:3001`
+    : 'https://bricks-9y9l.onrender.com';
+
+export const socket = io(socketUrl, {
     autoConnect: false,
 });
