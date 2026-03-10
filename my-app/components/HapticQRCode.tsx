@@ -39,13 +39,11 @@ export function HapticQRCode({ sessionCode }: HapticQRCodeProps) {
     }, [showQR]);
 
     // The URL the phone will open — includes session code and student socket id
-    // We try to use the hostname if we're not on localhost, otherwise fallback to the hardcoded local IP
-    // so that phones on the same WiFi can access the dev server
-    const host = typeof window !== 'undefined'
-        ? (window.location.hostname === 'localhost' ? '192.168.1.95' : window.location.hostname)
-        : '192.168.1.95';
-    const port = typeof window !== 'undefined' ? window.location.port : '3000';
-    const protocol = typeof window !== 'undefined' ? window.location.protocol : 'http:';
+    // For localhost development, use local IP. For production, use vercel deployment.
+    const isLocalhost = typeof window !== 'undefined' && window.location.hostname === 'localhost';
+    const host = isLocalhost ? '192.168.1.95' : 'rbrick.vercel.app';
+    const port = isLocalhost ? (typeof window !== 'undefined' ? window.location.port : '3000') : '';
+    const protocol = isLocalhost ? (typeof window !== 'undefined' ? window.location.protocol : 'http:') : 'https:';
 
     const mobileUrl = `${protocol}//${host}${port ? `:${port}` : ''}/student/mobile?code=${sessionCode}&studentId=${socket.id}`;
 
