@@ -16,7 +16,7 @@ export default function MobileProxy() {
     const [logs, setLogs] = useState<string[]>([]);
 
     function addLog(msg: string) {
-        setLogs(prev => [...prev.slice(-5), msg]); // keep last 5 logs
+        setLogs(prev => [...prev.slice(-19), msg]); // keep last 20 logs
     }
 
     useEffect(() => {
@@ -25,26 +25,30 @@ export default function MobileProxy() {
             return;
         }
 
+        addLog(`Vibrate supported: ${!!navigator.vibrate}`);
         socket.connect();
 
         socket.on("connect", () => {
+            addLog("Connected to server");
             // Register this phone as the haptic proxy for the student
             socket.emit(
                 "proxy:register",
                 { code, studentSocketId: studentId },
                 () => {
+                    addLog("Proxy registered successfully");
                     setStatus("linked");
                     // Notify desktop that phone is linked
                     socket.emit("proxy:linked");
                     // Confirmation buzz on link
-                    navigator.vibrate?.([80, 40, 80]);
+                    const result = navigator.vibrate?.([80, 40, 80]);
+                    addLog(`Link confirmation vibrate result: ${result}`);
                 }
             );
         });
 
         // Listen for haptic events from server
         socket.on("haptic:fire", ({ pattern }) => {
-            addLog(`haptic:fire received — pattern: ${pattern}`);
+            addLog(`haptic:fire received — pattern: ${JSON.stringify(pattern)}`);
             const result = navigator.vibrate?.(pattern);
             addLog(`vibrate result: ${result}`);
             setHapticCount(prev => prev + 1);
@@ -87,7 +91,8 @@ export default function MobileProxy() {
             <div
                 className="min-h-screen bg-gray-950 flex flex-col items-center justify-center px-8 text-center gap-6 cursor-pointer"
                 onClick={() => {
-                    navigator.vibrate?.([80, 40, 80]);
+                    const result = navigator.vibrate?.([80, 40, 80]);
+                    addLog(`Activation vibrate result: ${result}`);
                     setUserActivated(true);
                 }}
             >
@@ -133,6 +138,13 @@ export default function MobileProxy() {
                     </div>
                 )
             }
+
+            {/* Debug Console */}
+            <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-75 p-2 text-xs font-mono text-green-400 max-h-32 overflow-y-auto">
+                {logs.map((log, i) => (
+                    <div key={i}>{log}</div>
+                ))}
+            </div>
         </div >
     );
 }

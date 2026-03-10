@@ -346,6 +346,12 @@ function CadSessionInner() {
                 layer,
             },
         ]);
+
+        // Haptic feedback for brick placement
+        socket.emit("haptic:trigger", {
+            studentSocketId: socket.id,
+            pattern: [100], // short buzz for placement
+        });
     }
 
     function handleLeave() {
