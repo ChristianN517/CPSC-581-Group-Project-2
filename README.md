@@ -1,77 +1,110 @@
-# CPSC-581-Group-Project-2
-Repository for the second group project of CPSC 581
+# CPSC 581 Group Project 2 - Reinventing the Brick: An Interactive Learning System
+
+
+## Live Demo
+
+**Hosted Version**: [View the live application](https://rbrick.vercel.app)
+
+
+**Local Development**: Run the local server as described in the setup instructions below.
+
+## Features
+
+- **Real-time 3D Modeling**: Interactive brick-building interface using Three.js
+- **Session Collaboration**: One expert to multiple students with real-time updates
+- **Haptic Feedback**: Mobile devices provide tactile feedback during interactions
+- **Voice Recognition**: Speech-to-text functionality for hands-free operation
+- **QR Code Integration**: Easy mobile device pairing
+
+
+## How to Interact with Blocks
+
+### Desktop Interface
+- **Select Brick**: Select bricks from the side bar
+- **Place Bricks**: Click on the baseplate to place new bricks
+- **Rotate Bricks**: Press the 'R' key while dragging a brick to rotate it
+- **Drag Bricks**: Click and drag bricks to move them around the workspace
+- **Delete Bricks**: Right-click on bricks to remove them
+
+### Mobile Interface
+- **Haptic Feedback**: Mobile devices vibrate when bricks are placed correctly on the desktop
 
 ## Project Structure
+
 ```
 CPSC-581-Group-Project-2/
-├── my-app/       ← Next.js frontend
-└── server/       ← Node.js socket server
+├── my-app/          # Next.js frontend application
+│   ├── app/         # Next.js App Router pages
+│   ├── components/  # React components
+│   ├── lib/         # Utility functions and socket client
+│   └── public/      # Static assets
+└── server/          # Node.js WebSocket server
 ```
 
 ## Prerequisites
 
-Make sure you have these installed:
-- Node.js
-- npm
+- Node.js (v16 or higher)
+- npm 
+- Git
 
----
+## Local Development Setup
 
-## Setup — First Time Only
-
-### 1. Clone the repo
+### 1. Clone the Repository
 ```bash
 git clone https://github.com/ChristianN517/CPSC-581-Group-Project-2.git
-cd CPSC-581-Group-Project-2
 ```
 
-### 2. Install frontend dependencies
+### 2. Install Dependencies
+
+**Frontend (Next.js):**
 ```bash
 cd my-app
 npm install
 ```
 
-### 3. Install server dependencies
+**Backend (Socket Server):**
 ```bash
 cd ../server
 npm install
 ```
 
----
+### 3. Start the Application
 
-## Running the App
+You need **two terminals** running simultaneously:
 
-You need **two terminals open at the same time.**
-
-### Terminal 1: Socket Server
+**Terminal 1 - Socket Server:**
 ```bash
 cd server
 node index.js
 ```
-Server runs on `http://localhost:3001` by default.
-The server can also serve TLS directly if you provide cert/key files (useful for testing on another machine on your LAN). See the **HTTPS / LAN testing** section below.
+Server runs on `http://localhost:3001`
 
-### Terminal 2: Next.js Frontend
+**Terminal 2 - Next.js Frontend:**
 ```bash
 cd my-app
 npm run dev
 ```
 Frontend runs on `http://localhost:3000`
 
----
+### 4. Access the Application
 
-## Key Dependencies Added
+- **Desktop Interface**: http://localhost:3000
+- **Student Workspace**: http://localhost:3000/student
+- **Expert Workspace**: http://localhost:3000/expert
+- **Mobile Interface**: http://localhost:3000/student/mobile (for mobile devices)
 
-| Package | Location | Purpose |
-|---|---|---|
-| `socket.io` | `server/` | Real-time event server |
-| `cors` | `server/` | Allows cross-origin requests |
-| `socket.io-client` | `my-app/` | Connects frontend to socket server |
-| `three` | `my-app/` | 3D rendering engine |
-| `@react-three/fiber` | `my-app/` | React renderer for Three.js |
-| `@react-three/drei` | `my-app/` | Three.js helper components |
+## Key Technologies
 
----
+| Component | Technology | Purpose |
+|-----------|------------|---------|
+| **Frontend** | Next.js 16 | React framework with App Router |
+| **3D Rendering** | Three.js + React Three Fiber | Interactive 3D modeling |
+| **Real-time Communication** | Socket.IO | Bidirectional event streaming |
+| **Styling** | Tailwind CSS | Utility-first CSS framework |
+| **Mobile Features** | Web APIs | Vibration API, Web Audio API, Speech Recognition |
+| **Backend** | Node.js + Express | WebSocket server |
 
-## Notes
-- Both the server and frontend must be running at the same time for the app to work
-- If you get a CORS error, make sure the server is running on port `3001`
+
+## Team
+
+Chris, Grace, JJ, and Caleb
