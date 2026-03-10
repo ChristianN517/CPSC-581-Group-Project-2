@@ -14,6 +14,23 @@ export default function MobileProxy() {
     const [hapticCount, setHapticCount] = useState(0);
     const [userActivated, setUserActivated] = useState(false);
     const [logs, setLogs] = useState<string[]>([]);
+    const [hapticActive, setHapticActive] = useState(false);
+
+    function playBeep() {
+        try {
+            const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+            oscillator.frequency.value = 800; // Hz
+            gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
+            oscillator.start(audioContext.currentTime);
+            oscillator.stop(audioContext.currentTime + 0.1); // 100ms beep
+        } catch (e) {
+            addLog("Audio beep failed: " + e);
+        }
+    }
 
     function addLog(msg: string) {
         setLogs(prev => [...prev.slice(-19), msg]); // keep last 20 logs
@@ -40,17 +57,29 @@ export default function MobileProxy() {
                     // Notify desktop that phone is linked
                     socket.emit("proxy:linked");
                     // Confirmation buzz on link
-                    const result = navigator.vibrate?.([80, 40, 80]);
-                    addLog(`Link confirmation vibrate result: ${result}`);
+                    if (navigator.vibrate) {
+                        const result = navigator.vibrate(200);
+                        addLog(`Link confirmation vibrate result: ${result}`);
+                    } else {
+                        addLog("Link confirmation: using audio beep");
+                        playBeep();
+                    }
                 }
             );
         });
 
         // Listen for haptic events from server
         socket.on("haptic:fire", ({ pattern }) => {
-            addLog(`haptic:fire received — pattern: ${JSON.stringify(pattern)}`);
-            const result = navigator.vibrate?.(pattern);
-            addLog(`vibrate result: ${result}`);
+            addLog(`haptic:fire received — pattern: ${pattern}`);
+            setHapticActive(true);
+            setTimeout(() => setHapticActive(false), 500);
+            if (navigator.vibrate) {
+                const result = navigator.vibrate(pattern);
+                addLog(`vibrate result: ${result}`);
+            } else {
+                addLog("Using audio beep as fallback");
+                playBeep();
+            }
             setHapticCount(prev => prev + 1);
         });
 
@@ -91,8 +120,13 @@ export default function MobileProxy() {
             <div
                 className="min-h-screen bg-gray-950 flex flex-col items-center justify-center px-8 text-center gap-6 cursor-pointer"
                 onClick={() => {
-                    const result = navigator.vibrate?.([80, 40, 80]);
-                    addLog(`Activation vibrate result: ${result}`);
+                    if (navigator.vibrate) {
+                        const result = navigator.vibrate(200);
+                        addLog(`Activation vibrate result: ${result}`);
+                    } else {
+                        addLog("Activation: using audio beep");
+                        playBeep();
+                    }
                     setUserActivated(true);
                 }}
             >
@@ -112,7 +146,7 @@ export default function MobileProxy() {
     }
 
     return (
-        <div className="min-h-screen bg-gray-950 flex flex-col items-center justify-center px-8 text-center gap-10">
+        <div className={`min-h-screen ${hapticActive ? 'bg-green-950' : 'bg-gray-950'} flex flex-col items-center justify-center px-8 text-center gap-10`}>
 
             {/* Status indicator */}
             <div className="flex items-center gap-2">

@@ -44,6 +44,7 @@ function CadSessionInner() {
     const localStreamRef = useRef<MediaStream | null>(null);
     const [isTalking, setIsTalking] = useState(false);
     const remoteAudioRef = useRef<HTMLAudioElement | null>(null);
+    const lastPlacementTimeRef = useRef<number>(0); // Debounce double placements
 
     const BASEPLATE_SIZE = 10;
 
@@ -325,6 +326,13 @@ function CadSessionInner() {
     }
 
     function handlePlaceBrick(x: number, y: number, z: number) {
+        // Debounce: prevent double placement within 50ms
+        const now = Date.now();
+        if (now - lastPlacementTimeRef.current < 50) {
+            return;
+        }
+        lastPlacementTimeRef.current = now;
+
         const [w, , d] = currentTool;
         const half = BASEPLATE_SIZE / 2;
         if (
@@ -347,11 +355,28 @@ function CadSessionInner() {
             },
         ]);
 
-        // Haptic feedback for brick placement
-        socket.emit("haptic:trigger", {
-            studentSocketId: socket.id,
-            pattern: [100], // short buzz for placement
-        });
+        // Check if this placement matches a target brick
+        const targetBricks = (isPyramid ? pyramidData.targetData : wallData.targetData) as BrickData[];
+        const EPSILON = 0.01;
+        function approxEqual(a: number, b: number) {
+            return Math.abs(a - b) < EPSILON;
+        }
+        const isCorrectPlacement = targetBricks.some(target =>
+            approxEqual(target.position[0], newPos[0]) &&
+            approxEqual(target.position[1], newPos[1]) &&
+            approxEqual(target.position[2], newPos[2]) &&
+            approxEqual(target.dimensions[0], currentTool[0]) &&
+            approxEqual(target.dimensions[1], currentTool[1]) &&
+            approxEqual(target.dimensions[2], currentTool[2])
+        );
+
+        if (isCorrectPlacement) {
+            // Haptic feedback for correct brick placement
+            socket.emit("haptic:trigger", {
+                studentSocketId: socket.id,
+                pattern: 100,
+            });
+        }
     }
 
     function handleLeave() {
@@ -400,7 +425,7 @@ function CadSessionInner() {
 
                 socket.emit("haptic:trigger", {
                     studentSocketId: socket.id,
-                    pattern: [500, 100, 500],
+                    pattern: 500,
                 });
 
                 socket.emit("layer:completed", {
