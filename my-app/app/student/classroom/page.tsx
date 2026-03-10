@@ -15,6 +15,7 @@ import { ObjectiveModel } from "@/components/ObjectiveModel";
 import { socket } from "@/lib/socket";
 import Link from "next/link";
 import HelpKeywordListener from '@/components/HelpKeywordListener';
+import { HapticQRCode } from "@/components/HapticQRCode";
 
 
 function CameraResetter({ onReady }: { onReady: (reset: () => void) => void }) {
@@ -36,6 +37,7 @@ function CadSessionInner() {
     const [ctxMenu, setCtxMenu] = useState<{ x: number; y: number } | null>(null);
     const [bricks, setBricks] = useState<BrickData[]>([]);
     const resetCameraRef = useRef<(() => void) | null>(null);
+    const [completedLayers, setCompletedLayers] = useState<number[]>([]);
 
     // WebRTC voice chat state
     const pcRef = useRef<RTCPeerConnection | null>(null);
@@ -242,7 +244,7 @@ function CadSessionInner() {
         setIsTalking(false);
         try {
             if (pcRef.current) {
-                pcRef.current.getSenders().forEach((s) => { try { s.track?.stop(); } catch {} });
+                pcRef.current.getSenders().forEach((s) => { try { s.track?.stop(); } catch { } });
                 pcRef.current.close();
                 pcRef.current = null;
             }
@@ -251,7 +253,7 @@ function CadSessionInner() {
                 localStreamRef.current = null;
             }
             if (remoteAudioRef.current) {
-                try { remoteAudioRef.current.remove(); } catch {};
+                try { remoteAudioRef.current.remove(); } catch { };
                 remoteAudioRef.current = null;
             }
         } catch (err) {
@@ -352,13 +354,67 @@ function CadSessionInner() {
         router.push("/student");
     }
 
+
+    const completedLayersRef = useRef<number[]>([]);
+
+    const checkLayerCompletion = useCallback((studentBricks: BrickData[]) => {
+        const targetBricks = (isPyramid ? pyramidData.targetData : wallData.targetData) as BrickData[];
+        const uniqueLayers = Array.from(new Set(targetBricks.map((b) => b.layer)));
+
+        uniqueLayers.forEach((layerNum) => {
+            // Use ref instead of state for the check — always current
+            if (completedLayersRef.current.includes(layerNum)) return;
+
+            const targetLayer = targetBricks.filter((b) => b.layer === layerNum);
+            const studentLayer = studentBricks.filter((b) => b.layer === layerNum);
+
+            if (studentLayer.length !== targetLayer.length) return;
+            const EPSILON = 0.01;
+
+            function approxEqual(a: number, b: number) {
+                return Math.abs(a - b) < EPSILON;
+            }
+
+            const isLayerPerfect = targetLayer.every((target) =>
+                studentLayer.some(
+                    (user) =>
+                        approxEqual(user.position[0], target.position[0]) &&
+                        approxEqual(user.position[1], target.position[1]) &&
+                        approxEqual(user.position[2], target.position[2]) &&
+                        approxEqual(user.dimensions[0], target.dimensions[0]) &&
+                        approxEqual(user.dimensions[1], target.dimensions[1]) &&
+                        approxEqual(user.dimensions[2], target.dimensions[2])
+                )
+            );
+
+            if (isLayerPerfect) {
+                console.log(`Layer ${layerNum} complete — firing haptic`);
+                completedLayersRef.current = [...completedLayersRef.current, layerNum];
+                setCompletedLayers((prev) => [...prev, layerNum]);
+
+                socket.emit("haptic:trigger", {
+                    studentSocketId: socket.id,
+                    pattern: [500, 100, 500],
+                });
+
+                socket.emit("layer:completed", {
+                    layer: layerNum,
+                    studentId: socket.id,
+                });
+            }
+        });
+    }, [isPyramid]); // remove completedLayers from deps — use ref instead
+
     // Sync bricks with expert whenever they change
     useEffect(() => {
         socket.emit("board:update", { bricks });
-    }, [bricks]);
+        checkLayerCompletion(bricks);
+    }, [bricks, checkLayerCompletion]);
 
     // Derive unique layer numbers from placed bricks
     const usedLayers = Array.from(new Set(bricks.map((b) => b.layer))).sort((a, z) => a - z);
+
+    const sessionCode = activeSession?.code || "";
 
     return (
         <div className="flex flex-col h-screen overflow-hidden bg-gray-200">
@@ -379,7 +435,7 @@ function CadSessionInner() {
                 </div>
 
                 {/* right buttons */}
-                    <div className="flex items-center gap-4">
+                <div className="flex items-center gap-4">
                     <button
                         onClick={() => { isTalking ? stopVoice() : startVoice(); }}
                         className={`px-3 py-1 rounded ${isTalking ? 'bg-green-600 text-white' : 'border hover:bg-gray-100 text-black'}`}
@@ -388,9 +444,7 @@ function CadSessionInner() {
                         {isTalking ? 'Talking…' : 'Talk'}
                     </button>
 
-                    <span className="text-green-600 text-sm font-semibold">
-                        Phone Linked
-                    </span>
+                    <HapticQRCode sessionCode={sessionCode} />
 
                     <button
                         onClick={handleLeave}
@@ -478,7 +532,14 @@ function CadSessionInner() {
                             const layerBricks = bricks.filter((b) => b.layer === layerNum);
                             return (
                                 <div key={layerNum}>
-                                    <p className="text-xs font-semibold text-gray-500 mb-1">Layer {layerNum}</p>
+                                    <div className="flex items-center justify-between mb-1">
+                                        <p className="text-xs font-semibold text-gray-500">Layer {layerNum}</p>
+                                        {completedLayers.includes(layerNum) && (
+                                            <span className="text-xs font-semibold text-green-600">
+                                                Completed
+                                            </span>
+                                        )}
+                                    </div>
                                     <div className="space-y-1">
                                         {layerBricks.map((brick) => (
                                             <div
