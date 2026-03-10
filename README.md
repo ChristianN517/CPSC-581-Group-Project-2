@@ -47,7 +47,8 @@ You need **two terminals open at the same time.**
 cd server
 node index.js
 ```
-Server runs on `http://localhost:3001`
+Server runs on `http://localhost:3001` by default.
+The server can also serve TLS directly if you provide cert/key files (useful for testing on another machine on your LAN). See the **HTTPS / LAN testing** section below.
 
 ### Terminal 2: Next.js Frontend
 ```bash
